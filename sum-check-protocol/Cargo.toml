@@ -1,0 +1,15 @@
+[package]
+name = "sum-check-protocol"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
+ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+ark-std = { git = "https://github.com/arkworks-rs/std" }
+bitvec = "1.0.0"
+
+[dev-dependencies]
+pretty_assertions = "1"
