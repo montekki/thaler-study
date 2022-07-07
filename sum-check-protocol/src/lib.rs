@@ -7,6 +7,7 @@ use ark_poly::{
     univariate, Polynomial,
 };
 use ark_std::rand::Rng;
+use bitvec::slice::BitSlice;
 
 /// A convenient way to iterate over $n$-dimentional boolean hypercube.
 pub struct BooleanHypercube<F: Field> {
@@ -30,8 +31,7 @@ impl<F: Field> Iterator for BooleanHypercube<F> {
     type Item = Vec<F>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use bitvec::slice::BitSlice;
-        if self.current == 2u64.pow(self.n as u32) {
+        if self.current == 2u64.pow(self.n) {
             None
         } else {
             let vec = self.current.to_le_bytes();
@@ -60,7 +60,7 @@ fn to_univariate_polynomial_at_x_j<F: Field, P: DenseMVPolynomial<F>>(
     i: usize,
     at: &[F],
 ) -> univariate::SparsePolynomial<F> {
-    let mut res = univariate::SparsePolynomial::<F>::zero();
+    let mut res = univariate::SparsePolynomial::zero();
     let mut at_temp = at.to_vec();
     at_temp[i] = F::one();
 
