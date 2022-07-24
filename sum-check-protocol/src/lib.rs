@@ -9,6 +9,13 @@ use ark_poly::{
 use ark_std::rand::Rng;
 use bitvec::slice::BitSlice;
 
+/// An error type of sum check protocol
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("prover claim mismatches evaluation {0} {1}")]
+    ProverClaimMismatch(String, String),
+}
+
 /// A convenient way to iterate over $n$-dimentional boolean hypercube.
 pub struct BooleanHypercube<F: Field> {
     n: u32,
@@ -169,12 +176,16 @@ impl<F: Field> Verifier<F> {
         &mut self,
         g_j: univariate::SparsePolynomial<F>,
         rng: &mut R,
-    ) -> Result<VerifierRoundResult<F>, ()> {
+    ) -> Result<VerifierRoundResult<F>, Error> {
         let r_j = F::rand(rng);
         if self.r.is_empty() {
             // First Round
-            if self.c_1 != g_j.evaluate(&F::zero()) + g_j.evaluate(&F::one()) {
-                Err(())
+            let evaluation = g_j.evaluate(&F::zero()) + g_j.evaluate(&F::one());
+            if self.c_1 != evaluation {
+                Err(Error::ProverClaimMismatch(
+                    format!("{}", self.c_1),
+                    format!("{}", evaluation),
+                ))
             } else {
                 self.g_part.push(g_j);
                 self.r.push(r_j);
@@ -192,8 +203,13 @@ impl<F: Field> Verifier<F> {
             let g_jprev = self.g_part.last().unwrap();
             let r_jprev = self.r.last().unwrap();
 
-            if g_jprev.evaluate(r_jprev) != (g_j.evaluate(&F::zero()) + g_j.evaluate(&F::one())) {
-                return Err(());
+            let prev_evaluation = g_jprev.evaluate(r_jprev);
+            let evaluation = g_j.evaluate(&F::zero()) + g_j.evaluate(&F::one());
+            if prev_evaluation != evaluation {
+                return Err(Error::ProverClaimMismatch(
+                    format!("{}", prev_evaluation),
+                    format!("{}", prev_evaluation),
+                ));
             }
 
             self.g_part.push(g_j);

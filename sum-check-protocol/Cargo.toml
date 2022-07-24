@@ -10,6 +10,7 @@ ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
 ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
 ark-std = { git = "https://github.com/arkworks-rs/std" }
 bitvec = "1.0.0"
+thiserror = "1.0.31"
 
 [dev-dependencies]
 pretty_assertions = "1"
