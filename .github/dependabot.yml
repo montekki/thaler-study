@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: "cago"
+    directory: "/"
+    schedule:
+      interval: "daily"
