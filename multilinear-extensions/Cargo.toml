@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
 ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+
+[dev-dependencies]
+pretty_assertions = "1"
