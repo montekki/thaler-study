@@ -7,5 +7,10 @@ edition = "2021"
 
 members = [
     "multilinear-extensions",
+    "triangle-counting",
     "sum-check-protocol",
 ]
+
+[patch."https://github.com/arkworks-rs/algebra"]
+ark-poly = { git = "https://github.com/montekki/algebra", branch = "fs-fix-relabel-assert" }
+ark-ff = { git = "https://github.com/montekki/algebra", branch = "fs-fix-relabel-assert" }
