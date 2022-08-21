@@ -20,7 +20,7 @@ impl<F: Field> G<F> {
             num_vars,
             matrix
                 .into_iter()
-                .map(|b| if b == true { F::one() } else { F::zero() })
+                .map(|b| if b { F::one() } else { F::zero() })
                 .collect(),
         );
 
