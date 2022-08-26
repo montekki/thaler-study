@@ -55,7 +55,7 @@ impl<F: FftField> G<F> {
 impl<F: FftField> SumCheckPolynomial<F> for G<F> {
     /// Evaluate over a point $(X, Y, Z)$.
     fn evaluate(&self, point: &[F]) -> Option<F> {
-        assert!(point.len() * 2 == self.f_a.num_vars() * 3);
+        assert!(point.len() == (self.f_a.num_vars() / 2) * 3);
 
         let mut x_z = point[..self.f_a.num_vars() / 2].to_owned();
         x_z.extend_from_slice(&point[self.f_a.num_vars()..]);
@@ -106,17 +106,82 @@ impl<F: FftField> SumCheckPolynomial<F> for G<F> {
     }
 
     fn to_evaluations(&self) -> Vec<F> {
-        self.f_a.to_evaluations()
+        let x_size = self.f_a.num_vars() / 2;
+        let bit_mask_least_significant = (usize::MAX << x_size) ^ usize::MAX;
+        let bit_mask_most_significant = bit_mask_least_significant << x_size;
+
+        let mut res = vec![F::zero(); 2usize.pow(self.num_vars() as u32)];
+        let evaluations = self.f_a.to_evaluations();
+
+        for (x_y, evaluation) in evaluations.iter().enumerate() {
+            for z in 0..2usize.pow(x_size as u32) {
+                let f_x_y = evaluation;
+                let f_y_z_idx = ((x_y << x_size) & bit_mask_most_significant) | z;
+                let f_y_z = evaluations[f_y_z_idx];
+
+                let f_x_z_idx = (x_y & bit_mask_most_significant) | z;
+                let f_x_z = evaluations[f_x_z_idx];
+
+                let f_x_y_z = (*f_x_y * f_y_z) * f_x_z;
+
+                res[(x_y << x_size) | z] = f_x_y_z;
+            }
+        }
+
+        res
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use ark_ff::{Fp64, MontBackend, MontConfig, One};
-    use ark_std::test_rng;
+    use ark_ff::{Fp64, MontBackend, MontConfig, One, PrimeField};
+    use ark_std::{rand::Rng, test_rng};
+    use pretty_assertions::assert_eq;
     use sum_check_protocol::{Prover, Verifier, VerifierRoundResult};
 
     use super::*;
+
+    struct AdjMatrix(Vec<Vec<bool>>);
+
+    impl AdjMatrix {
+        fn new<R: Rng>(n: usize, rng: &mut R) -> Self {
+            let mut res = Vec::with_capacity(n);
+
+            for _ in 0..n {
+                res.push(vec![false; n]);
+            }
+
+            for i in 0..n {
+                for j in 0..n {
+                    if i != j {
+                        let are_connected = rng.gen();
+
+                        res[i][j] = are_connected;
+                        res[j][i] = are_connected;
+                    }
+                }
+            }
+
+            Self(res)
+        }
+
+        fn triangle_count(&self) -> usize {
+            let mut count = 0;
+            let n = self.0.len();
+
+            for x in 0..n {
+                for y in 0..n {
+                    for z in 0..n {
+                        if self.0[x][y] & self.0[y][z] & self.0[x][z] {
+                            count += 1;
+                        }
+                    }
+                }
+            }
+
+            count / 6
+        }
+    }
 
     #[test]
     fn test_simple_matrix() {
@@ -160,5 +225,59 @@ mod tests {
         }
 
         panic!("should have returned on FinalRound from verifier");
+    }
+
+    #[test]
+    fn randomized_test() {
+        let rng = &mut test_rng();
+
+        #[derive(MontConfig)]
+        #[modulus = "389"]
+        #[generator = "2"]
+        struct FrConfig;
+
+        type Fp389 = Fp64<MontBackend<FrConfig, 1>>;
+
+        for i in 2..8 {
+            let n = 2usize.pow(i);
+
+            let test_matrix = AdjMatrix::new(n, rng);
+
+            let triangle_count = test_matrix.triangle_count();
+
+            let g: G<Fp389> = G::new_adj_matrix(
+                (f64::from(n as u32).log2() as usize) * 2,
+                test_matrix.0.iter().flatten().map(|b| *b),
+            );
+
+            let mut prover = Prover::new(g.clone());
+            let c_1 = prover.c_1();
+
+            let count = c_1.into_bigint().as_ref()[0];
+
+            assert_eq!(
+                triangle_count * 6,
+                count as usize,
+                "mismatch for size {n}: {triangle_count} {count}"
+            );
+
+            let mut r_j = Fp389::one();
+            let num_vars = g.num_vars();
+            let mut verifier = Verifier::new(num_vars, c_1, g);
+
+            for j in 0..num_vars {
+                let g_j = prover.round(r_j, j).unwrap();
+                let verifier_res = verifier.round(g_j, rng).unwrap();
+                match verifier_res {
+                    VerifierRoundResult::JthRound(r) => r_j = r,
+                    VerifierRoundResult::FinalRound(res) => {
+                        assert!(res);
+                        return;
+                    }
+                }
+            }
+
+            panic!("Should have returned on the last round of Verifier");
+        }
     }
 }
