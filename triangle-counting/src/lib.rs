@@ -231,6 +231,7 @@ mod tests {
     fn randomized_test() {
         let rng = &mut test_rng();
 
+        // TODO: This field is of the wrong size, p > 6 * n^3 needed
         #[derive(MontConfig)]
         #[modulus = "389"]
         #[generator = "2"]
