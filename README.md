@@ -6,6 +6,5 @@ rustdocs can be found
 [here](https://montekki.github.io/thaler-study/).
 
 
-[Proofs, Arguments and Zero Knowledge](
-https://people.cs.georgetown.edu/jthaler/ProofsArgsAndZK.html
-)
+[Proofs, Arguments and Zero Knowledge]: https://people.cs.georgetown.edu/jthaler/ProofsArgsAndZK.html
+
