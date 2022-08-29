@@ -6,6 +6,7 @@ edition = "2021"
 [workspace]
 
 members = [
+    "matrix-multiplication",
     "multilinear-extensions",
     "triangle-counting",
     "sum-check-protocol",
