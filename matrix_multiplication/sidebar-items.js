@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["G","A polynomial of form $g(z) = \\tilde{f}_A(r_1,z) \\cdot \\tilde{f}_B(z, r_2)$. used to apply Sum Check protocol to matrix multiplication"]]};
