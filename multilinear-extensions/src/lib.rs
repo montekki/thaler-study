@@ -47,13 +47,22 @@ pub fn cti_multilinear_from_evaluations<F: Field>(evals: &[F], r: &[F]) -> F {
     res
 }
 
-fn lagrange_basis_poly_at<F: Field>(x: &[F], w: &[F]) -> Option<F> {
-    if x.len() != x.len() {
+/// Evaluate a multilinear lagrange basis polynomial $\chi_w(x)$.
+pub fn lagrange_basis_poly_at<F: Field>(x: &[F], w: &[F]) -> Option<F> {
+    if w.len() != x.len() {
         None
     } else {
-        let res = x.iter().zip(w.iter()).fold(F::one(), |acc, (&x_i, &w_i)| {
-            acc * (x_i * w_i + (F::one() - x_i) * (F::one() - w_i))
-        });
+        let res = x
+            .iter()
+            .zip(w.iter())
+            .try_fold(F::one(), |acc, (&x_i, &w_i)| {
+                if acc.is_zero() {
+                    None
+                } else {
+                    Some(acc * (x_i * w_i + (F::one() - x_i) * (F::one() - w_i)))
+                }
+            })
+            .unwrap_or_else(|| F::zero());
 
         Some(res)
     }
