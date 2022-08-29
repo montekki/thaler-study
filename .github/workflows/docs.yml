@@ -33,7 +33,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: doc 
-          args: --all-features --verbose --no-deps --all
+          args: --verbose --no-deps --all
 
       - name: Move built docs
         run:  |
