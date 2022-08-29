@@ -1,4 +1,4 @@
-name:
+name: Build and deploy docs
 on:
   pull_request:
   push:
@@ -38,6 +38,7 @@ jobs:
       - name: Move built docs
         run:  |
           mv ./target/doc/ ./docs/
+          echo "<meta http-equiv=\"refresh\" content=\"0; url=multilinear_extensions\">" > target/doc/index.html
           ls -l ./docs/
 
       - name: Deploy
