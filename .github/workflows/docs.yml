@@ -1,0 +1,47 @@
+name:
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  rustdocs:
+    name: Build rustdocs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - name: Install Stable Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Run cargo doc
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc 
+          args: --all-features --verbose --no-deps --all
+
+      - name: Move built docs
+        run:  |
+          mv ./target/doc/ ./docs/
+          ls -l ./docs/
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/
