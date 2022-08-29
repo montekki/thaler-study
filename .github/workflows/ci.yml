@@ -72,36 +72,3 @@ jobs:
         with:
           command: clippy
           args: --all -- -D warnings
-  rustdocs:
-    name: Build rustdocs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.10.0
-        with:
-          access_token: ${{ github.token }}
-
-      - name: Checkout sources
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-          submodules: recursive
-
-      - name: Install Stable Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc 
-          args: --all-features --verbose --no-deps --all
-
-      - name: Move built docs
-        run:  |
-          mv ./target/doc/ ./docs/
-          ls -l ./docs/
