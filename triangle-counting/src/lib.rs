@@ -1,14 +1,18 @@
+use std::cmp;
+
 use ark_ff::{FftField, Field};
 use ark_poly::{
-    univariate::{DensePolynomial, SparsePolynomial},
-    DenseMultilinearExtension, EvaluationDomain, Evaluations, GeneralEvaluationDomain,
-    MultilinearExtension,
+    univariate::SparsePolynomial, DenseMultilinearExtension, EvaluationDomain, Evaluations,
+    GeneralEvaluationDomain, MultilinearExtension,
 };
 use sum_check_protocol::SumCheckPolynomial;
 
 #[derive(Clone)]
 pub struct G<F: Field> {
-    f_a: DenseMultilinearExtension<F>,
+    f_a_1: DenseMultilinearExtension<F>,
+    f_a_2: DenseMultilinearExtension<F>,
+    f_a_3: DenseMultilinearExtension<F>,
+    var_len: usize,
 }
 
 impl<F: Field> G<F> {
@@ -24,112 +28,124 @@ impl<F: Field> G<F> {
                 .collect(),
         );
 
-        Self { f_a: g }
-    }
-}
-
-impl<F: FftField> G<F> {
-    fn g_to_univariate_at(&self, at: usize, point: &[F]) -> DensePolynomial<F> {
-        let mut fixed_1 = self.f_a.fix_variables(&point[..at]);
-
-        if at != self.f_a.num_vars() - 1 {
-            fixed_1.relabel_inplace(0, fixed_1.num_vars() - 1, 1);
-            fixed_1 = fixed_1.fix_variables(&[point[point.len() - 1]]);
-            let fixed_2 = fixed_1.fix_variables(&point[at + 1..point.len() - 1]);
-            fixed_1 = fixed_2;
+        let var_len = g.num_vars() / 2;
+        Self {
+            f_a_1: g.clone(),
+            f_a_2: g.clone(),
+            f_a_3: g,
+            var_len,
         }
+    }
 
-        let domain = GeneralEvaluationDomain::new(3).unwrap();
+    fn x_vars_num(&self) -> usize {
+        self.f_a_1.num_vars().saturating_sub(self.var_len)
+    }
 
-        let evaluations = domain
-            .elements()
-            .map(|e| fixed_1.evaluate(&[e]).unwrap())
-            .collect();
+    fn y_vars_num(&self) -> usize {
+        self.f_a_2.num_vars().saturating_sub(self.var_len)
+    }
 
-        let evaluations = Evaluations::from_vec_and_domain(evaluations, domain);
-
-        evaluations.interpolate()
+    fn z_vars_num(&self) -> usize {
+        if self.f_a_3.num_vars() < self.var_len {
+            self.f_a_3.num_vars()
+        } else {
+            self.var_len
+        }
     }
 }
 
 impl<F: FftField> SumCheckPolynomial<F> for G<F> {
-    /// Evaluate over a point $(X, Y, Z)$.
     fn evaluate(&self, point: &[F]) -> Option<F> {
-        assert!(point.len() == (self.f_a.num_vars() / 2) * 3);
+        let x_y_point = point
+            .get(..self.x_vars_num() + self.y_vars_num())
+            .unwrap_or(&[]);
 
-        let mut x_z = point[..self.f_a.num_vars() / 2].to_owned();
-        x_z.extend_from_slice(&point[self.f_a.num_vars()..]);
-        // X, Y
-        Some(
-            self.f_a.evaluate(&point[..self.f_a.num_vars()])? *
-            // Y, Z
-            self.f_a.evaluate(&point[self.f_a.num_vars() / 2 .. ])?
-            * self.f_a.evaluate(&x_z)?,
-        )
+        let y_z_point = point.get(self.x_vars_num()..).unwrap_or(&[]);
+        let f_x_y_evaluation = self.f_a_1.evaluate(x_y_point)?;
+        let f_y_z_evaluation = self.f_a_2.evaluate(y_z_point)?;
+
+        let mut x_z = point.get(..self.x_vars_num()).unwrap_or(&[]).to_owned();
+
+        x_z.extend_from_slice(&point[self.x_vars_num() + self.y_vars_num()..]);
+
+        let f_x_z_evaluation = self.f_a_3.evaluate(&x_z)?;
+
+        Some(f_x_y_evaluation * f_x_z_evaluation * f_y_z_evaluation)
     }
 
-    fn to_univariate_at_point(&self, at: usize, point: &[F]) -> Option<SparsePolynomial<F>> {
-        let x_y = &point[..self.f_a.num_vars()];
-        let y_z = &point[self.f_a.num_vars() / 2..];
-        let mut x_z = point[..self.f_a.num_vars() / 2].to_owned();
-        x_z.extend_from_slice(&point[self.f_a.num_vars()..]);
+    fn fix_variables(&self, partial_point: &[F]) -> Self {
+        let x_y_point = partial_point
+            .get(..cmp::min(self.x_vars_num() + self.y_vars_num(), partial_point.len()))
+            .unwrap_or(&[]);
 
-        match at / (self.f_a.num_vars() / 2) {
-            0 => {
-                let f_y_z = self.f_a.evaluate(y_z).unwrap();
+        let y_z_point = &partial_point.get(self.x_vars_num()..).unwrap_or(&[]);
 
-                let a = self.g_to_univariate_at(at, x_y);
-                let b = self.g_to_univariate_at(at, &x_z);
-                Some((&(&a * &b) * f_y_z).into())
-            }
-            1 => {
-                let f_x_z = self.f_a.evaluate(&x_z).unwrap();
+        let mut x_z_point = partial_point
+            .get(..cmp::min(self.x_vars_num(), partial_point.len()))
+            .unwrap_or(&[])
+            .to_owned();
 
-                let a = self.g_to_univariate_at(at, x_y);
-                let b = self.g_to_univariate_at(at - self.f_a.num_vars() / 2, y_z);
-                Some((&(&a * &b) * f_x_z).into())
-            }
-            2 => {
-                let f_x_y = self.f_a.evaluate(x_y).unwrap();
+        x_z_point.extend_from_slice(
+            partial_point
+                .get(self.x_vars_num() + self.y_vars_num()..)
+                .unwrap_or(&[]),
+        );
 
-                let a = self.g_to_univariate_at(at - self.f_a.num_vars() / 2, &x_z);
-                let b = self.g_to_univariate_at(at - self.f_a.num_vars() / 2, y_z);
+        let f_a_1 = self.f_a_1.fix_variables(x_y_point);
+        let f_a_2 = self.f_a_2.fix_variables(y_z_point);
+        let f_a_3 = self.f_a_3.fix_variables(&x_z_point);
+        let var_len = self.var_len;
 
-                Some((&(&a * &b) * f_x_y).into())
-            }
-            _ => None,
+        Self {
+            f_a_1,
+            f_a_2,
+            f_a_3,
+            var_len,
         }
     }
 
+    fn to_univariate(&self) -> SparsePolynomial<F> {
+        let domain = GeneralEvaluationDomain::new(3).unwrap();
+
+        let evals = domain
+            .elements()
+            .map(|e| self.fix_variables(&[e]).to_evaluations().into_iter().sum())
+            .collect();
+
+        let evaluations = Evaluations::from_vec_and_domain(evals, domain);
+        let p = evaluations.interpolate();
+
+        p.into()
+    }
+
     fn num_vars(&self) -> usize {
-        (self.f_a.num_vars() / 2) * 3
+        self.x_vars_num() + self.y_vars_num() + self.z_vars_num()
     }
 
     fn to_evaluations(&self) -> Vec<F> {
-        let x_size = self.f_a.num_vars() / 2;
-        let bit_mask_least_significant = (usize::MAX << x_size) ^ usize::MAX;
-        let bit_mask_most_significant = bit_mask_least_significant << x_size;
+        let f_a_1_evals = self.f_a_1.to_evaluations();
+        let f_a_2_evals = self.f_a_2.to_evaluations();
+        let f_a_3_evals = self.f_a_3.to_evaluations();
 
-        let mut res = vec![F::zero(); 2usize.pow(self.num_vars() as u32)];
-        let evaluations = self.f_a.to_evaluations();
+        let mut res = vec![];
+        for x_idx in 0..2usize.pow(self.x_vars_num() as u32) {
+            for y_idx in 0..2usize.pow(self.y_vars_num() as u32) {
+                for z_idx in 0..2usize.pow(self.z_vars_num() as u32) {
+                    let idx_1 = idx(y_idx, x_idx, self.x_vars_num());
+                    let idx_2 = idx(z_idx, y_idx, self.y_vars_num());
+                    let idx_3 = idx(z_idx, x_idx, self.x_vars_num());
 
-        for (x_y, evaluation) in evaluations.iter().enumerate() {
-            for z in 0..2usize.pow(x_size as u32) {
-                let f_x_y = evaluation;
-                let f_y_z_idx = ((x_y << x_size) & bit_mask_most_significant) | z;
-                let f_y_z = evaluations[f_y_z_idx];
-
-                let f_x_z_idx = (x_y & bit_mask_most_significant) | z;
-                let f_x_z = evaluations[f_x_z_idx];
-
-                let f_x_y_z = (*f_x_y * f_y_z) * f_x_z;
-
-                res[(x_y << x_size) | z] = f_x_y_z;
+                    res.push(f_a_1_evals[idx_1] * f_a_2_evals[idx_2] * f_a_3_evals[idx_3])
+                }
             }
         }
 
         res
     }
+}
+
+fn idx(i: usize, j: usize, num_vars: usize) -> usize {
+    (i << num_vars) | j
 }
 
 #[cfg(test)]
@@ -231,15 +247,14 @@ mod tests {
     fn randomized_test() {
         let rng = &mut test_rng();
 
-        // TODO: This field is of the wrong size, p > 6 * n^3 needed
         #[derive(MontConfig)]
-        #[modulus = "389"]
+        #[modulus = "1572869"]
         #[generator = "2"]
         struct FrConfig;
 
         type Fp389 = Fp64<MontBackend<FrConfig, 1>>;
 
-        for i in 2..8 {
+        for i in 1..8 {
             let n = 2usize.pow(i);
 
             let test_matrix = AdjMatrix::new(n, rng);
@@ -273,12 +288,9 @@ mod tests {
                     VerifierRoundResult::JthRound(r) => r_j = r,
                     VerifierRoundResult::FinalRound(res) => {
                         assert!(res);
-                        return;
                     }
                 }
             }
-
-            panic!("Should have returned on the last round of Verifier");
         }
     }
 }
