@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["G",""]]};
+window.SIDEBAR_ITEMS = {"struct":[["G","A polynomial"]]};

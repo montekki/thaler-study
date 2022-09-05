@@ -312,20 +312,72 @@
 <span id="282">282</span>
 <span id="283">283</span>
 <span id="284">284</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ark_ff</span>::{<span class="ident">FftField</span>, <span class="ident">Field</span>};
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::cmp</span>;
+
+<span class="kw">use</span> <span class="ident">ark_ff</span>::{<span class="ident">FftField</span>, <span class="ident">Field</span>};
 <span class="kw">use</span> <span class="ident">ark_poly</span>::{
-    <span class="ident">univariate</span>::{<span class="ident">DensePolynomial</span>, <span class="ident">SparsePolynomial</span>},
-    <span class="ident">DenseMultilinearExtension</span>, <span class="ident">EvaluationDomain</span>, <span class="ident">Evaluations</span>, <span class="ident">GeneralEvaluationDomain</span>,
-    <span class="ident">MultilinearExtension</span>,
+    <span class="ident">univariate::SparsePolynomial</span>, <span class="ident">DenseMultilinearExtension</span>, <span class="ident">EvaluationDomain</span>, <span class="ident">Evaluations</span>,
+    <span class="ident">GeneralEvaluationDomain</span>, <span class="ident">MultilinearExtension</span>,
 };
 <span class="kw">use</span> <span class="ident">sum_check_protocol::SumCheckPolynomial</span>;
 
+<span class="doccomment">/// A polynomial</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// $$</span>
+<span class="doccomment">/// g(X,Y,Z) = \tilde{f}_A(X,Y) \cdot \tilde{f}_A(Y,Z) \cdot \tilde{f}_A(X,Z)</span>
+<span class="doccomment">/// $$</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// that when used with Sum Check protocol yields an IP for computing a $6\Delta$</span>
+<span class="doccomment">/// number of triangles in a graph.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Holds three copies of a multilinear extension $\tilde{f}_A$ since fixing</span>
+<span class="doccomment">/// a variable in $g$ will lead to different multilinear equations.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">G</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> {
-    <span class="ident">f_a</span>: <span class="ident">DenseMultilinearExtension</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+    <span class="ident">f_a_1</span>: <span class="ident">DenseMultilinearExtension</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+    <span class="ident">f_a_2</span>: <span class="ident">DenseMultilinearExtension</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+    <span class="ident">f_a_3</span>: <span class="ident">DenseMultilinearExtension</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+    <span class="ident">var_len</span>: <span class="ident">usize</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> <span class="ident">G</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Creates a new $3 \log n$-variate polynomial $g(X,Y,Z)$ from</span>
+    <span class="doccomment">/// a graph adjacency matrix.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_adj_matrix</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span>(<span class="ident">num_vars</span>: <span class="ident">usize</span>, <span class="ident">matrix</span>: <span class="ident">M</span>) -&gt; <span class="self">Self</span>
     <span class="kw">where</span>
         <span class="ident">M</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">bool</span><span class="op">&gt;</span>,
@@ -338,112 +390,134 @@
                 .<span class="ident">collect</span>(),
         );
 
-        <span class="self">Self</span> { <span class="ident">f_a</span>: <span class="ident">g</span> }
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FftField</span><span class="op">&gt;</span> <span class="ident">G</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">g_to_univariate_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>, <span class="ident">point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="ident">DensePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fixed_1</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[..<span class="ident">at</span>]);
-
-        <span class="kw">if</span> <span class="ident">at</span> <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">-</span> <span class="number">1</span> {
-            <span class="ident">fixed_1</span>.<span class="ident">relabel_inplace</span>(<span class="number">0</span>, <span class="ident">fixed_1</span>.<span class="ident">num_vars</span>() <span class="op">-</span> <span class="number">1</span>, <span class="number">1</span>);
-            <span class="ident">fixed_1</span> <span class="op">=</span> <span class="ident">fixed_1</span>.<span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span>[<span class="ident">point</span>[<span class="ident">point</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>]]);
-            <span class="kw">let</span> <span class="ident">fixed_2</span> <span class="op">=</span> <span class="ident">fixed_1</span>.<span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[<span class="ident">at</span> <span class="op">+</span> <span class="number">1</span>..<span class="ident">point</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>]);
-            <span class="ident">fixed_1</span> <span class="op">=</span> <span class="ident">fixed_2</span>;
+        <span class="kw">let</span> <span class="ident">var_len</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>;
+        <span class="self">Self</span> {
+            <span class="ident">f_a_1</span>: <span class="ident">g</span>.<span class="ident">clone</span>(),
+            <span class="ident">f_a_2</span>: <span class="ident">g</span>.<span class="ident">clone</span>(),
+            <span class="ident">f_a_3</span>: <span class="ident">g</span>,
+            <span class="ident">var_len</span>,
         }
+    }
 
-        <span class="kw">let</span> <span class="ident">domain</span> <span class="op">=</span> <span class="ident">GeneralEvaluationDomain::new</span>(<span class="number">3</span>).<span class="ident">unwrap</span>();
+    <span class="kw">fn</span> <span class="ident">x_vars_num</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
+        <span class="self">self</span>.<span class="ident">f_a_1</span>.<span class="ident">num_vars</span>().<span class="ident">saturating_sub</span>(<span class="self">self</span>.<span class="ident">var_len</span>)
+    }
 
-        <span class="kw">let</span> <span class="ident">evaluations</span> <span class="op">=</span> <span class="ident">domain</span>
-            .<span class="ident">elements</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">fixed_1</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span>[<span class="ident">e</span>]).<span class="ident">unwrap</span>())
-            .<span class="ident">collect</span>();
+    <span class="kw">fn</span> <span class="ident">y_vars_num</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
+        <span class="self">self</span>.<span class="ident">f_a_2</span>.<span class="ident">num_vars</span>().<span class="ident">saturating_sub</span>(<span class="self">self</span>.<span class="ident">var_len</span>)
+    }
 
-        <span class="kw">let</span> <span class="ident">evaluations</span> <span class="op">=</span> <span class="ident">Evaluations::from_vec_and_domain</span>(<span class="ident">evaluations</span>, <span class="ident">domain</span>);
-
-        <span class="ident">evaluations</span>.<span class="ident">interpolate</span>()
+    <span class="kw">fn</span> <span class="ident">z_vars_num</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">f_a_3</span>.<span class="ident">num_vars</span>() <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">var_len</span> {
+            <span class="self">self</span>.<span class="ident">f_a_3</span>.<span class="ident">num_vars</span>()
+        } <span class="kw">else</span> {
+            <span class="self">self</span>.<span class="ident">var_len</span>
+        }
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FftField</span><span class="op">&gt;</span> <span class="ident">SumCheckPolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">G</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Evaluate over a point $(X, Y, Z)$.</span>
     <span class="kw">fn</span> <span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="ident">point</span>.<span class="ident">len</span>() <span class="op">==</span> (<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>) <span class="op">*</span> <span class="number">3</span>);
+        <span class="kw">let</span> <span class="ident">x_y_point</span> <span class="op">=</span> <span class="ident">point</span>
+            .<span class="ident">get</span>(..<span class="self">self</span>.<span class="ident">x_vars_num</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">y_vars_num</span>())
+            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[]);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x_z</span> <span class="op">=</span> <span class="ident">point</span>[..<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>].<span class="ident">to_owned</span>();
-        <span class="ident">x_z</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>()..]);
-        <span class="comment">// X, Y</span>
-        <span class="prelude-val">Some</span>(
-            <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[..<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>()])<span class="question-mark">?</span> <span class="op">*</span>
-            <span class="comment">// Y, Z</span>
-            <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span> .. ])<span class="question-mark">?</span>
-            <span class="op">*</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">x_z</span>)<span class="question-mark">?</span>,
-        )
+        <span class="kw">let</span> <span class="ident">y_z_point</span> <span class="op">=</span> <span class="ident">point</span>.<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">x_vars_num</span>()..).<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[]);
+        <span class="kw">let</span> <span class="ident">f_x_y_evaluation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_1</span>.<span class="ident">evaluate</span>(<span class="ident">x_y_point</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">f_y_z_evaluation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_2</span>.<span class="ident">evaluate</span>(<span class="ident">y_z_point</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x_z</span> <span class="op">=</span> <span class="ident">point</span>.<span class="ident">get</span>(..<span class="self">self</span>.<span class="ident">x_vars_num</span>()).<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[]).<span class="ident">to_owned</span>();
+
+        <span class="ident">x_z</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[<span class="self">self</span>.<span class="ident">x_vars_num</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">y_vars_num</span>()..]);
+
+        <span class="kw">let</span> <span class="ident">f_x_z_evaluation</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_3</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">x_z</span>)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Some</span>(<span class="ident">f_x_y_evaluation</span> <span class="op">*</span> <span class="ident">f_x_z_evaluation</span> <span class="op">*</span> <span class="ident">f_y_z_evaluation</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">to_univariate_at_point</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">at</span>: <span class="ident">usize</span>, <span class="ident">point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">x_y</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">point</span>[..<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>()];
-        <span class="kw">let</span> <span class="ident">y_z</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">point</span>[<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>..];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x_z</span> <span class="op">=</span> <span class="ident">point</span>[..<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>].<span class="ident">to_owned</span>();
-        <span class="ident">x_z</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>()..]);
+    <span class="kw">fn</span> <span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">partial_point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">x_y_point</span> <span class="op">=</span> <span class="ident">partial_point</span>
+            .<span class="ident">get</span>(..<span class="ident">cmp::min</span>(<span class="self">self</span>.<span class="ident">x_vars_num</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">y_vars_num</span>(), <span class="ident">partial_point</span>.<span class="ident">len</span>()))
+            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[]);
 
-        <span class="kw">match</span> <span class="ident">at</span> <span class="op">/</span> (<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>) {
-            <span class="number">0</span> =&gt; {
-                <span class="kw">let</span> <span class="ident">f_y_z</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">evaluate</span>(<span class="ident">y_z</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">y_z_point</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">partial_point</span>.<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">x_vars_num</span>()..).<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[]);
 
-                <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g_to_univariate_at</span>(<span class="ident">at</span>, <span class="ident">x_y</span>);
-                <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g_to_univariate_at</span>(<span class="ident">at</span>, <span class="kw-2">&amp;</span><span class="ident">x_z</span>);
-                <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>(<span class="kw-2">&amp;</span><span class="ident">a</span> <span class="op">*</span> <span class="kw-2">&amp;</span><span class="ident">b</span>) <span class="op">*</span> <span class="ident">f_y_z</span>).<span class="ident">into</span>())
-            }
-            <span class="number">1</span> =&gt; {
-                <span class="kw">let</span> <span class="ident">f_x_z</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">x_z</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x_z_point</span> <span class="op">=</span> <span class="ident">partial_point</span>
+            .<span class="ident">get</span>(..<span class="ident">cmp::min</span>(<span class="self">self</span>.<span class="ident">x_vars_num</span>(), <span class="ident">partial_point</span>.<span class="ident">len</span>()))
+            .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[])
+            .<span class="ident">to_owned</span>();
 
-                <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g_to_univariate_at</span>(<span class="ident">at</span>, <span class="ident">x_y</span>);
-                <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g_to_univariate_at</span>(<span class="ident">at</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>, <span class="ident">y_z</span>);
-                <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>(<span class="kw-2">&amp;</span><span class="ident">a</span> <span class="op">*</span> <span class="kw-2">&amp;</span><span class="ident">b</span>) <span class="op">*</span> <span class="ident">f_x_z</span>).<span class="ident">into</span>())
-            }
-            <span class="number">2</span> =&gt; {
-                <span class="kw">let</span> <span class="ident">f_x_y</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">evaluate</span>(<span class="ident">x_y</span>).<span class="ident">unwrap</span>();
+        <span class="ident">x_z_point</span>.<span class="ident">extend_from_slice</span>(
+            <span class="ident">partial_point</span>
+                .<span class="ident">get</span>(<span class="self">self</span>.<span class="ident">x_vars_num</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">y_vars_num</span>()..)
+                .<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span>[]),
+        );
 
-                <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g_to_univariate_at</span>(<span class="ident">at</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>, <span class="kw-2">&amp;</span><span class="ident">x_z</span>);
-                <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g_to_univariate_at</span>(<span class="ident">at</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>, <span class="ident">y_z</span>);
+        <span class="kw">let</span> <span class="ident">f_a_1</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_1</span>.<span class="ident">fix_variables</span>(<span class="ident">x_y_point</span>);
+        <span class="kw">let</span> <span class="ident">f_a_2</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_2</span>.<span class="ident">fix_variables</span>(<span class="ident">y_z_point</span>);
+        <span class="kw">let</span> <span class="ident">f_a_3</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_3</span>.<span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span><span class="ident">x_z_point</span>);
+        <span class="kw">let</span> <span class="ident">var_len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">var_len</span>;
 
-                <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>(<span class="kw-2">&amp;</span><span class="ident">a</span> <span class="op">*</span> <span class="kw-2">&amp;</span><span class="ident">b</span>) <span class="op">*</span> <span class="ident">f_x_y</span>).<span class="ident">into</span>())
-            }
-            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+        <span class="self">Self</span> {
+            <span class="ident">f_a_1</span>,
+            <span class="ident">f_a_2</span>,
+            <span class="ident">f_a_3</span>,
+            <span class="ident">var_len</span>,
         }
     }
 
+    <span class="kw">fn</span> <span class="ident">to_univariate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">domain</span> <span class="op">=</span> <span class="ident">GeneralEvaluationDomain::new</span>(<span class="number">3</span>).<span class="ident">unwrap</span>();
+
+        <span class="kw">let</span> <span class="ident">evals</span> <span class="op">=</span> <span class="ident">domain</span>
+            .<span class="ident">elements</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span>[<span class="ident">e</span>]).<span class="ident">to_evaluations</span>().<span class="ident">into_iter</span>().<span class="ident">sum</span>())
+            .<span class="ident">collect</span>();
+
+        <span class="kw">let</span> <span class="ident">evaluations</span> <span class="op">=</span> <span class="ident">Evaluations::from_vec_and_domain</span>(<span class="ident">evals</span>, <span class="ident">domain</span>);
+        <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">evaluations</span>.<span class="ident">interpolate</span>();
+
+        <span class="ident">p</span>.<span class="ident">into</span>()
+    }
+
     <span class="kw">fn</span> <span class="ident">num_vars</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        (<span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>) <span class="op">*</span> <span class="number">3</span>
+        <span class="self">self</span>.<span class="ident">x_vars_num</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">y_vars_num</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">z_vars_num</span>()
     }
 
     <span class="kw">fn</span> <span class="ident">to_evaluations</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">x_size</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">num_vars</span>() <span class="op">/</span> <span class="number">2</span>;
-        <span class="kw">let</span> <span class="ident">bit_mask_least_significant</span> <span class="op">=</span> (<span class="ident">usize::MAX</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">x_size</span>) <span class="op">^</span> <span class="ident">usize::MAX</span>;
-        <span class="kw">let</span> <span class="ident">bit_mask_most_significant</span> <span class="op">=</span> <span class="ident">bit_mask_least_significant</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">x_size</span>;
+        <span class="comment">// combine the evaluations of separate multilinear</span>
+        <span class="comment">// extensions into a vector of evaluations of the</span>
+        <span class="comment">// whole polynomial</span>
+        <span class="kw">let</span> <span class="ident">f_a_1_evals</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_1</span>.<span class="ident">to_evaluations</span>();
+        <span class="kw">let</span> <span class="ident">f_a_2_evals</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_2</span>.<span class="ident">to_evaluations</span>();
+        <span class="kw">let</span> <span class="ident">f_a_3_evals</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a_3</span>.<span class="ident">to_evaluations</span>();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">F::zero</span>(); <span class="number">2usize</span>.<span class="ident">pow</span>(<span class="self">self</span>.<span class="ident">num_vars</span>() <span class="kw">as</span> <span class="ident">u32</span>)];
-        <span class="kw">let</span> <span class="ident">evaluations</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">f_a</span>.<span class="ident">to_evaluations</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+        <span class="kw">for</span> <span class="ident">x_idx</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">2usize</span>.<span class="ident">pow</span>(<span class="self">self</span>.<span class="ident">x_vars_num</span>() <span class="kw">as</span> <span class="ident">u32</span>) {
+            <span class="kw">for</span> <span class="ident">y_idx</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">2usize</span>.<span class="ident">pow</span>(<span class="self">self</span>.<span class="ident">y_vars_num</span>() <span class="kw">as</span> <span class="ident">u32</span>) {
+                <span class="kw">for</span> <span class="ident">z_idx</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">2usize</span>.<span class="ident">pow</span>(<span class="self">self</span>.<span class="ident">z_vars_num</span>() <span class="kw">as</span> <span class="ident">u32</span>) {
+                    <span class="comment">// indexing into evaluations in this order: x, y, z</span>
+                    <span class="comment">// and so when combining for example x and y</span>
+                    <span class="comment">// x always occupies the lower bits and y occupies the</span>
+                    <span class="comment">// higher bits in the index.</span>
 
-        <span class="kw">for</span> (<span class="ident">x_y</span>, <span class="ident">evaluation</span>) <span class="kw">in</span> <span class="ident">evaluations</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-            <span class="kw">for</span> <span class="ident">z</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">2usize</span>.<span class="ident">pow</span>(<span class="ident">x_size</span> <span class="kw">as</span> <span class="ident">u32</span>) {
-                <span class="kw">let</span> <span class="ident">f_x_y</span> <span class="op">=</span> <span class="ident">evaluation</span>;
-                <span class="kw">let</span> <span class="ident">f_y_z_idx</span> <span class="op">=</span> ((<span class="ident">x_y</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">x_size</span>) <span class="op">&amp;</span> <span class="ident">bit_mask_most_significant</span>) <span class="op">|</span> <span class="ident">z</span>;
-                <span class="kw">let</span> <span class="ident">f_y_z</span> <span class="op">=</span> <span class="ident">evaluations</span>[<span class="ident">f_y_z_idx</span>];
+                    <span class="kw">let</span> <span class="ident">idx_1</span> <span class="op">=</span> <span class="ident">idx</span>(<span class="ident">y_idx</span>, <span class="ident">x_idx</span>, <span class="self">self</span>.<span class="ident">x_vars_num</span>());
+                    <span class="kw">let</span> <span class="ident">idx_2</span> <span class="op">=</span> <span class="ident">idx</span>(<span class="ident">z_idx</span>, <span class="ident">y_idx</span>, <span class="self">self</span>.<span class="ident">y_vars_num</span>());
+                    <span class="kw">let</span> <span class="ident">idx_3</span> <span class="op">=</span> <span class="ident">idx</span>(<span class="ident">z_idx</span>, <span class="ident">x_idx</span>, <span class="self">self</span>.<span class="ident">x_vars_num</span>());
 
-                <span class="kw">let</span> <span class="ident">f_x_z_idx</span> <span class="op">=</span> (<span class="ident">x_y</span> <span class="op">&amp;</span> <span class="ident">bit_mask_most_significant</span>) <span class="op">|</span> <span class="ident">z</span>;
-                <span class="kw">let</span> <span class="ident">f_x_z</span> <span class="op">=</span> <span class="ident">evaluations</span>[<span class="ident">f_x_z_idx</span>];
-
-                <span class="kw">let</span> <span class="ident">f_x_y_z</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">f_x_y</span> <span class="op">*</span> <span class="ident">f_y_z</span>) <span class="op">*</span> <span class="ident">f_x_z</span>;
-
-                <span class="ident">res</span>[(<span class="ident">x_y</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">x_size</span>) <span class="op">|</span> <span class="ident">z</span>] <span class="op">=</span> <span class="ident">f_x_y_z</span>;
+                    <span class="ident">res</span>.<span class="ident">push</span>(<span class="ident">f_a_1_evals</span>[<span class="ident">idx_1</span>] <span class="op">*</span> <span class="ident">f_a_2_evals</span>[<span class="ident">idx_2</span>] <span class="op">*</span> <span class="ident">f_a_3_evals</span>[<span class="ident">idx_3</span>])
+                }
             }
         }
 
         <span class="ident">res</span>
     }
+}
+
+<span class="doccomment">/// Combine indices of two variables into one to be able</span>
+<span class="doccomment">/// to index into evaluations of polynomial.</span>
+<span class="kw">fn</span> <span class="ident">idx</span>(<span class="ident">i</span>: <span class="ident">usize</span>, <span class="ident">j</span>: <span class="ident">usize</span>, <span class="ident">num_vars</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
+    (<span class="ident">i</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">num_vars</span>) <span class="op">|</span> <span class="ident">j</span>
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
@@ -545,15 +619,14 @@
     <span class="kw">fn</span> <span class="ident">randomized_test</span>() {
         <span class="kw">let</span> <span class="ident">rng</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">test_rng</span>();
 
-        <span class="comment">// TODO: This field is of the wrong size, p &gt; 6 * n^3 needed</span>
         <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">MontConfig</span>)]</span>
-        <span class="attribute">#[<span class="ident">modulus</span> <span class="op">=</span> <span class="string">&quot;389&quot;</span>]</span>
+        <span class="attribute">#[<span class="ident">modulus</span> <span class="op">=</span> <span class="string">&quot;1572869&quot;</span>]</span>
         <span class="attribute">#[<span class="ident">generator</span> <span class="op">=</span> <span class="string">&quot;2&quot;</span>]</span>
         <span class="kw">struct</span> <span class="ident">FrConfig</span>;
 
         <span class="kw">type</span> <span class="ident">Fp389</span> <span class="op">=</span> <span class="ident">Fp64</span><span class="op">&lt;</span><span class="ident">MontBackend</span><span class="op">&lt;</span><span class="ident">FrConfig</span>, <span class="number">1</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">2</span>..<span class="number">8</span> {
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..<span class="number">8</span> {
             <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="number">2usize</span>.<span class="ident">pow</span>(<span class="ident">i</span>);
 
             <span class="kw">let</span> <span class="ident">test_matrix</span> <span class="op">=</span> <span class="ident">AdjMatrix::new</span>(<span class="ident">n</span>, <span class="ident">rng</span>);
@@ -587,12 +660,9 @@
                     <span class="ident">VerifierRoundResult::JthRound</span>(<span class="ident">r</span>) =&gt; <span class="ident">r_j</span> <span class="op">=</span> <span class="ident">r</span>,
                     <span class="ident">VerifierRoundResult::FinalRound</span>(<span class="ident">res</span>) =&gt; {
                         <span class="macro">assert!</span>(<span class="ident">res</span>);
-                        <span class="kw">return</span>;
                     }
                 }
             }
-
-            <span class="macro">panic!</span>(<span class="string">&quot;Should have returned on the last round of Verifier&quot;</span>);
         }
     }
 }

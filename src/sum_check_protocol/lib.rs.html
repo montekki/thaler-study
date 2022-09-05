@@ -458,6 +458,73 @@
 <span id="428">428</span>
 <span id="429">429</span>
 <span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident">ark_ff</span>::{<span class="ident">Field</span>, <span class="ident">Zero</span>};
@@ -552,8 +619,10 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">round</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">r_prev</span>: <span class="ident">F</span>, <span class="ident">j</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">univariate::SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">j</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
             <span class="self">self</span>.<span class="ident">r</span>.<span class="ident">push</span>(<span class="ident">r_prev</span>);
+            <span class="self">self</span>.<span class="ident">g</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g</span>.<span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span>[<span class="ident">r_prev</span>]);
         }
-        <span class="ident">multivariate_to_univariate_with_fixed_vars</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">g</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">r</span>, <span class="ident">j</span>)
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">g</span>.<span class="ident">to_univariate</span>();
+        <span class="prelude-val">Some</span>(<span class="ident">res</span>)
     }
 }
 
@@ -566,18 +635,27 @@
     <span class="doccomment">/// an expected one.</span>
     <span class="kw">fn</span> <span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>;
 
-    <span class="doccomment">/// Given an index of a variable `i`, and a point `at` in</span>
-    <span class="doccomment">/// $F^n$ reduce the multivariate polynomial</span>
-    <span class="doccomment">/// to a single variate polynomial $s(x_i)$ by partially</span>
-    <span class="doccomment">/// evaluating g at point $(a_1,...,a_{i-1},X_i,a_{i+1},...,a_n)$.</span>
+    <span class="doccomment">/// Reduce the number of variables in `Self` by fixing a</span>
+    <span class="doccomment">/// `partial_point.len()` variables at `partial_point`.</span>
+    <span class="kw">fn</span> <span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">partial_point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="self">Self</span>;
+
+    <span class="doccomment">/// Compute the $j$-th round of polynomial for sumcheck over</span>
+    <span class="doccomment">/// first variable.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Return `None` if the `at` position was wrong or `point`</span>
-    <span class="doccomment">/// dimentions did not match the expected ones.</span>
-    <span class="kw">fn</span> <span class="ident">to_univariate_at_point</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">at</span>: <span class="ident">usize</span>,
-        <span class="ident">point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>],
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">univariate::SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Reduces to univariate polynomial of first variable:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// $$</span>
+    <span class="doccomment">/// \sum_{(x_{j+1},\cdots,x_{\nu}) \in \lbrace 0, 1 \rbrace ^{\nu - 1}}</span>
+    <span class="doccomment">/// g(X_j,x_{j+1},x_{j+2},\cdots,x_{\nu})</span>
+    <span class="doccomment">/// $$</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note that the initial polynomial $g(x_1,\cdots,x_{\nu})$ that</span>
+    <span class="doccomment">/// the protocol was started with is supposed to become</span>
+    <span class="doccomment">/// $g(r_1,r_2,\cdots,x_j,\cdots,x_n)$ at this point by calling [`fix_variables`]</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`fix_variables`]: SumCheckPolynomial::fix_variables</span>
+    <span class="kw">fn</span> <span class="ident">to_univariate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">univariate::SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Returns the number of variables in `self`</span>
     <span class="kw">fn</span> <span class="ident">num_vars</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span>;
@@ -592,30 +670,56 @@
         <span class="prelude-val">Some</span>(<span class="ident">Polynomial::evaluate</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="ident">point</span>.<span class="ident">to_owned</span>()))
     }
 
-    <span class="kw">fn</span> <span class="ident">to_univariate_at_point</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">at</span>: <span class="ident">usize</span>,
-        <span class="ident">point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>],
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">univariate::SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">univariate::SparsePolynomial::zero</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">point_temp</span> <span class="op">=</span> <span class="ident">point</span>.<span class="ident">to_vec</span>();
-        <span class="ident">point_temp</span>[<span class="ident">at</span>] <span class="op">=</span> <span class="ident">F::one</span>();
+    <span class="kw">fn</span> <span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">partial_point</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::zero</span>();
+        <span class="kw">let</span> <span class="ident">num_vars</span> <span class="op">=</span> <span class="ident">DenseMVPolynomial::num_vars</span>(<span class="self">self</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">full_point</span> <span class="op">=</span> <span class="ident">partial_point</span>.<span class="ident">to_vec</span>();
+        <span class="ident">full_point</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="macro">vec!</span>[<span class="ident">F::one</span>(); <span class="ident">num_vars</span> <span class="op">-</span> <span class="ident">partial_point</span>.<span class="ident">len</span>()]);
 
         <span class="kw">for</span> (<span class="ident">coeff</span>, <span class="ident">term</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">terms</span>() {
-            <span class="kw">let</span> <span class="ident">eval</span> <span class="op">=</span> <span class="ident">term</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">point_temp</span>);
-            <span class="kw">let</span> <span class="ident">power</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">term</span>
-                .<span class="ident">vars</span>()
-                .<span class="ident">iter</span>()
-                .<span class="ident">zip</span>(<span class="ident">term</span>.<span class="ident">powers</span>().<span class="ident">iter</span>())
-                .<span class="ident">find</span>(<span class="op">|</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">v</span> <span class="op">==</span> <span class="ident">at</span>)
-            {
-                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">p</span>)) =&gt; <span class="kw-2">*</span><span class="ident">p</span>,
-                <span class="prelude-val">None</span> =&gt; <span class="number">0</span>,
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">eval</span> <span class="op">=</span> <span class="ident">term</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">full_point</span>);
+            <span class="ident">eval</span> <span class="kw-2">*</span><span class="op">=</span> <span class="ident">coeff</span>;
+            <span class="kw">let</span> <span class="ident">new_term</span> <span class="op">=</span> <span class="ident">SparseTerm::new</span>(
+                <span class="ident">term</span>.<span class="ident">iter</span>()
+                    .<span class="ident">filter</span>(<span class="op">|</span>(<span class="ident">var</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">var</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">partial_point</span>.<span class="ident">len</span>())
+                    .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">var</span>, <span class="ident">power</span>)<span class="op">|</span> (<span class="ident">var</span> <span class="op">-</span> <span class="ident">partial_point</span>.<span class="ident">len</span>(), <span class="kw-2">*</span><span class="ident">power</span>))
+                    .<span class="ident">collect</span>(),
+            );
+            <span class="kw">let</span> <span class="ident">poly</span> <span class="op">=</span> <span class="ident">multivariate::SparsePolynomial</span> {
+                <span class="ident">num_vars</span>: <span class="ident">num_vars</span> <span class="op">-</span> <span class="ident">partial_point</span>.<span class="ident">len</span>(),
+                <span class="ident">terms</span>: <span class="macro">vec!</span>[(<span class="ident">eval</span>, <span class="ident">new_term</span>)],
             };
-            <span class="kw">let</span> <span class="ident">new_coeff</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">coeff</span> <span class="op">*</span> <span class="ident">eval</span>;
-            <span class="ident">res</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">univariate::SparsePolynomial::from_coefficients_slice</span>(<span class="kw-2">&amp;</span>[(<span class="ident">power</span>, <span class="ident">new_coeff</span>)]);
+
+            <span class="ident">res</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">poly</span>;
         }
-        <span class="prelude-val">Some</span>(<span class="ident">res</span>)
+
+        <span class="ident">res</span>
+    }
+
+    <span class="kw">fn</span> <span class="ident">to_univariate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">univariate::SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">univariate::SparsePolynomial::zero</span>();
+
+        <span class="kw">for</span> <span class="ident">p</span> <span class="kw">in</span> <span class="ident">BooleanHypercube::new</span>((<span class="ident">DenseMVPolynomial::num_vars</span>(<span class="self">self</span>) <span class="op">-</span> <span class="number">1</span>) <span class="kw">as</span> <span class="ident">u32</span>) {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">point</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">F::one</span>()];
+            <span class="ident">point</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">p</span>);
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">univariate::SparsePolynomial::zero</span>();
+
+            <span class="kw">for</span> (<span class="ident">coeff</span>, <span class="ident">term</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">terms</span>() {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">eval</span> <span class="op">=</span> <span class="ident">term</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>);
+                <span class="kw">let</span> <span class="ident">power</span> <span class="op">=</span> <span class="ident">term</span>
+                    .<span class="ident">iter</span>()
+                    .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">variable</span>, <span class="ident">_power</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">variable</span> <span class="op">==</span> <span class="number">0</span>)
+                    .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_variable</span>, <span class="ident">power</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">power</span>)
+                    .<span class="ident">unwrap_or</span>(<span class="number">0</span>);
+
+                <span class="ident">eval</span> <span class="kw-2">*</span><span class="op">=</span> <span class="ident">coeff</span>;
+
+                <span class="ident">r</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">univariate::SparsePolynomial::from_coefficients_slice</span>(<span class="kw-2">&amp;</span>[(<span class="ident">power</span>, <span class="ident">eval</span>)]);
+            }
+            <span class="ident">res</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">r</span>;
+        }
+
+        <span class="ident">res</span>
     }
 
     <span class="kw">fn</span> <span class="ident">num_vars</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
@@ -688,8 +792,8 @@
             <span class="kw">let</span> <span class="ident">evaluation</span> <span class="op">=</span> <span class="ident">g_j</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">F::zero</span>()) <span class="op">+</span> <span class="ident">g_j</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">F::one</span>());
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">c_1</span> <span class="op">!</span><span class="op">=</span> <span class="ident">evaluation</span> {
                 <span class="prelude-val">Err</span>(<span class="ident">Error::ProverClaimMismatch</span>(
-                    <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">c_1</span>),
-                    <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">evaluation</span>),
+                    <span class="macro">format!</span>(<span class="string">&quot;start {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">c_1</span>),
+                    <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">evaluation</span>),
                 ))
             } <span class="kw">else</span> {
                 <span class="self">self</span>.<span class="ident">g_part</span>.<span class="ident">push</span>(<span class="ident">g_j</span>);
@@ -700,6 +804,9 @@
         } <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">r</span>.<span class="ident">len</span>() <span class="op">==</span> (<span class="self">self</span>.<span class="ident">n</span> <span class="op">-</span> <span class="number">1</span>) {
             <span class="comment">// Last round</span>
             <span class="self">self</span>.<span class="ident">r</span>.<span class="ident">push</span>(<span class="ident">r_j</span>);
+
+            <span class="macro">assert_eq!</span>(<span class="ident">g_j</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">r_j</span>), <span class="self">self</span>.<span class="ident">g</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">r</span>).<span class="ident">unwrap</span>());
+
             <span class="prelude-val">Ok</span>(<span class="ident">VerifierRoundResult::FinalRound</span>(
                 <span class="ident">g_j</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">r_j</span>) <span class="op">==</span> <span class="self">self</span>.<span class="ident">g</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">r</span>).<span class="ident">unwrap</span>(),
             ))
@@ -712,8 +819,8 @@
             <span class="kw">let</span> <span class="ident">evaluation</span> <span class="op">=</span> <span class="ident">g_j</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">F::zero</span>()) <span class="op">+</span> <span class="ident">g_j</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">F::one</span>());
             <span class="kw">if</span> <span class="ident">prev_evaluation</span> <span class="op">!</span><span class="op">=</span> <span class="ident">evaluation</span> {
                 <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::ProverClaimMismatch</span>(
-                    <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">prev_evaluation</span>),
-                    <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">evaluation</span>),
+                    <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">prev_evaluation</span>),
+                    <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">evaluation</span>),
                 ));
             }
 
@@ -725,46 +832,16 @@
     }
 }
 
-<span class="doccomment">/// Partially evaluate multivariate polynomial $g$ to be a univariate polynimial</span>
-<span class="doccomment">/// of var $X_j$.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// r: values $r_1 ... r_{j-1}$ that variables $X_1,...,X_{j-1}$ have been bound to.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// $$</span>
-<span class="doccomment">/// \sum_{(x_{j+1},...,x_\nu) \in \lbrace 0, 1 \rbrace ^ {\nu - 1}}</span>
-<span class="doccomment">/// g(r_1,...,r_{j-1},X_j,x_{j+1},...,x_n)</span>
-<span class="doccomment">/// $$</span>
-<span class="kw">fn</span> <span class="ident">multivariate_to_univariate_with_fixed_vars</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span>, <span class="ident">P</span>: <span class="ident">SumCheckPolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-    <span class="ident">g</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>,
-    <span class="ident">r</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>],
-    <span class="ident">j</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">univariate::SparsePolynomial</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">univariate::SparsePolynomial</span>::<span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="ident">::zero</span>();
-
-    <span class="comment">// A Boolean hypercube over variables X_{j+1}...X_{n}.</span>
-    <span class="kw">for</span> <span class="ident">x_point</span> <span class="kw">in</span> <span class="ident">BooleanHypercube</span>::<span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="ident">::new</span>((<span class="ident">g</span>.<span class="ident">num_vars</span>() <span class="op">-</span> <span class="ident">j</span> <span class="op">-</span> <span class="number">1</span>) <span class="kw">as</span> <span class="ident">u32</span>) {
-        <span class="comment">// [r_1,...,r_{j-1},1,X_{j+1},...,X_n]</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">point</span> <span class="op">=</span> <span class="ident">r</span>.<span class="ident">to_vec</span>();
-        <span class="ident">point</span>.<span class="ident">push</span>(<span class="ident">F::one</span>());
-        <span class="ident">point</span>.<span class="ident">extend</span>(<span class="ident">x_point</span>.<span class="ident">into_iter</span>());
-
-        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">to_univariate_at_point</span>(<span class="ident">j</span>, <span class="kw-2">&amp;</span><span class="ident">point</span>)<span class="question-mark">?</span>;
-        <span class="ident">res</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">r</span>;
-    }
-
-    <span class="prelude-val">Some</span>(<span class="ident">res</span>)
-}
-
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="ident">ark_ff</span>::{
         <span class="ident">fields::Fp64</span>,
         <span class="ident">fields</span>::{<span class="ident">MontBackend</span>, <span class="ident">MontConfig</span>},
-        <span class="ident">Field</span>, <span class="ident">One</span>, <span class="ident">PrimeField</span>, <span class="ident">UniformRand</span>,
+        <span class="ident">Field</span>, <span class="ident">One</span>, <span class="ident">PrimeField</span>,
     };
     <span class="kw">use</span> <span class="ident">ark_poly</span>::{
         <span class="ident">multivariate</span>::{<span class="self">self</span>, <span class="ident">SparseTerm</span>, <span class="ident">Term</span>},
-        <span class="ident">DenseMVPolynomial</span>, <span class="ident">Polynomial</span>,
+        <span class="ident">DenseMVPolynomial</span>,
     };
     <span class="kw">use</span> <span class="ident">ark_std</span>::{<span class="ident">rand::Rng</span>, <span class="ident">test_rng</span>};
     <span class="kw">use</span> <span class="ident">pretty_assertions::assert_eq</span>;
@@ -824,40 +901,97 @@
             ],
         );
 
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">poly</span>.<span class="ident">to_univariate_at_point</span>(<span class="number">0</span>, <span class="kw-2">&amp;</span>[<span class="number">2u32</span>.<span class="ident">into</span>(), <span class="number">1u32</span>.<span class="ident">into</span>()]);
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">poly</span>.<span class="ident">fix_variables</span>(<span class="kw-2">&amp;</span>[<span class="number">2u32</span>.<span class="ident">into</span>()]);
 
-        <span class="macro">println!</span>(<span class="string">&quot;res {:?}&quot;</span>, <span class="ident">res</span>);
+        <span class="kw">let</span> <span class="ident">poly_expected</span> <span class="op">=</span> <span class="ident">multivariate::SparsePolynomial::from_coefficients_slice</span>(
+            <span class="number">1</span>,
+            <span class="kw-2">&amp;</span>[
+                (
+                    <span class="ident">Fp5::from_bigint</span>(<span class="number">4u32</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
+                    <span class="ident">multivariate::SparseTerm::new</span>(<span class="macro">vec!</span>[(<span class="number">0</span>, <span class="number">1</span>)]),
+                ),
+                (
+                    <span class="ident">Fp5::from_bigint</span>(<span class="number">2u32</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
+                    <span class="ident">multivariate::SparseTerm::new</span>(<span class="macro">vec!</span>[(<span class="number">0</span>, <span class="number">2</span>)]),
+                ),
+            ],
+        );
+        <span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="ident">poly_expected</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_from_book</span>() {
+        <span class="kw">let</span> <span class="ident">rng</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">test_rng</span>();
+        <span class="comment">// 2 *x_1^3 + x_1 * x_3 + x_2 * x_3</span>
+        <span class="kw">let</span> <span class="ident">g</span> <span class="op">=</span> <span class="ident">multivariate::SparsePolynomial::from_coefficients_slice</span>(
+            <span class="number">3</span>,
+            <span class="kw-2">&amp;</span>[
+                (
+                    <span class="ident">Fp5::from_bigint</span>(<span class="number">2u32</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
+                    <span class="ident">multivariate::SparseTerm::new</span>(<span class="macro">vec!</span>[(<span class="number">0</span>, <span class="number">3</span>)]),
+                ),
+                (
+                    <span class="ident">Fp5::from_bigint</span>(<span class="number">1u32</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
+                    <span class="ident">multivariate::SparseTerm::new</span>(<span class="macro">vec!</span>[(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">2</span>, <span class="number">1</span>)]),
+                ),
+                (
+                    <span class="ident">Fp5::from_bigint</span>(<span class="number">1u32</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
+                    <span class="ident">multivariate::SparseTerm::new</span>(<span class="macro">vec!</span>[(<span class="number">1</span>, <span class="number">1</span>), (<span class="number">2</span>, <span class="number">1</span>)]),
+                ),
+            ],
+        );
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">prover</span> <span class="op">=</span> <span class="ident">Prover::new</span>(<span class="ident">g</span>.<span class="ident">clone</span>());
+        <span class="kw">let</span> <span class="ident">c_1</span> <span class="op">=</span> <span class="ident">prover</span>.<span class="ident">c_1</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r_j</span> <span class="op">=</span> <span class="ident">Fp5::one</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">Verifier::new</span>(<span class="number">3</span>, <span class="ident">c_1</span>, <span class="ident">g</span>);
+
+        <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">3</span> {
+            <span class="kw">let</span> <span class="ident">g_j</span> <span class="op">=</span> <span class="ident">prover</span>.<span class="ident">round</span>(<span class="ident">r_j</span>, <span class="ident">j</span>).<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="ident">verifier_res</span> <span class="op">=</span> <span class="ident">verifier</span>.<span class="ident">round</span>(<span class="ident">g_j</span>, <span class="ident">rng</span>).<span class="ident">unwrap</span>();
+            <span class="kw">match</span> <span class="ident">verifier_res</span> {
+                <span class="ident">VerifierRoundResult::JthRound</span>(<span class="ident">r</span>) =&gt; {
+                    <span class="ident">r_j</span> <span class="op">=</span> <span class="ident">r</span>;
+                }
+                <span class="ident">VerifierRoundResult::FinalRound</span>(<span class="ident">res</span>) =&gt; {
+                    <span class="macro">assert!</span>(<span class="ident">res</span>);
+                    <span class="kw">break</span>;
+                }
+            }
+        }
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">randomized_test</span>() {
-        <span class="kw">let</span> <span class="ident">rng</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">test_rng</span>();
+        <span class="comment">/*
+        let rng = &amp;mut test_rng();
 
-        <span class="kw">for</span> <span class="ident">var_count</span> <span class="kw">in</span> <span class="number">1</span>..<span class="number">10</span> {
-            <span class="kw">let</span> <span class="ident">degree</span> <span class="op">=</span> <span class="number">10</span>;
-            <span class="kw">let</span> <span class="ident">poly</span>: <span class="ident">multivariate::SparsePolynomial</span><span class="op">&lt;</span><span class="ident">Fp5</span>, <span class="ident">SparseTerm</span><span class="op">&gt;</span> <span class="op">=</span>
-                <span class="ident">rand_poly</span>(<span class="ident">var_count</span>, <span class="ident">degree</span>, <span class="ident">rng</span>);
+        for var_count in 1..10 {
+            let degree = 10;
+            let poly: multivariate::SparsePolynomial&lt;Fp5, SparseTerm&gt; =
+                rand_poly(var_count, degree, rng);
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">point</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">var_count</span>);
+            let mut point = Vec::with_capacity(var_count);
 
-            <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">var_count</span> {
-                <span class="ident">point</span>.<span class="ident">push</span>(<span class="ident">Fp5::rand</span>(<span class="ident">rng</span>));
+            for _ in 0..var_count {
+                point.push(Fp5::rand(rng));
             }
 
-            <span class="kw">let</span> <span class="ident">normal_evaluation</span> <span class="op">=</span> <span class="ident">Polynomial::evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">poly</span>, <span class="kw-2">&amp;</span><span class="ident">point</span>);
+            let normal_evaluation = Polynomial::evaluate(&amp;poly, &amp;point);
 
-            <span class="kw">for</span> <span class="ident">fixed_var_idx</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">var_count</span> {
-                <span class="kw">let</span> <span class="ident">reduced_uni_poly</span> <span class="op">=</span> <span class="ident">poly</span>.<span class="ident">to_univariate_at_point</span>(<span class="ident">fixed_var_idx</span>, <span class="kw-2">&amp;</span><span class="ident">point</span>).<span class="ident">unwrap</span>();
+            for fixed_var_idx in 0..var_count {
+                let reduced_uni_poly = poly.to_univariate_at_point(fixed_var_idx, &amp;point).unwrap();
 
-                <span class="kw">let</span> <span class="ident">univariate_evaluation</span> <span class="op">=</span> <span class="ident">reduced_uni_poly</span>.<span class="ident">evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">point</span>[<span class="ident">fixed_var_idx</span>]);
+                let univariate_evaluation = reduced_uni_poly.evaluate(&amp;point[fixed_var_idx]);
 
-                <span class="macro">assert_eq!</span>(
-                    <span class="ident">normal_evaluation</span>, <span class="ident">univariate_evaluation</span>,
-                    <span class="string">&quot;{:?} \n\n {:?}&quot;</span>,
-                    <span class="ident">poly</span>, <span class="ident">reduced_uni_poly</span>
+                assert_eq!(
+                    normal_evaluation, univariate_evaluation,
+                    &quot;{:?} \n\n {:?}&quot;,
+                    poly, reduced_uni_poly
                 );
             }
         }
+        */</span>
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
