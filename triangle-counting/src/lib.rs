@@ -7,6 +7,17 @@ use ark_poly::{
 };
 use sum_check_protocol::SumCheckPolynomial;
 
+/// A polynomial
+///
+/// $$
+/// g(X,Y,Z) = \tilde{f}_A(X,Y) \cdot \tilde{f}_A(Y,Z) \cdot \tilde{f}_A(X,Z)
+/// $$
+///
+/// that when used with Sum Check protocol yields an IP for computing a $6\Delta$
+/// number of triangles in a graph.
+///
+/// Holds three copies of a multilinear extension $\tilde{f}_A$ since fixing
+/// a variable in $g$ will lead to different multilinear equations.
 #[derive(Clone)]
 pub struct G<F: Field> {
     f_a_1: DenseMultilinearExtension<F>,
@@ -16,6 +27,8 @@ pub struct G<F: Field> {
 }
 
 impl<F: Field> G<F> {
+    /// Creates a new $3 \log n$-variate polynomial $g(X,Y,Z)$ from
+    /// a graph adjacency matrix.
     pub fn new_adj_matrix<M>(num_vars: usize, matrix: M) -> Self
     where
         M: IntoIterator<Item = bool>,
@@ -123,6 +136,9 @@ impl<F: FftField> SumCheckPolynomial<F> for G<F> {
     }
 
     fn to_evaluations(&self) -> Vec<F> {
+        // combine the evaluations of separate multilinear
+        // extensions into a vector of evaluations of the
+        // whole polynomial
         let f_a_1_evals = self.f_a_1.to_evaluations();
         let f_a_2_evals = self.f_a_2.to_evaluations();
         let f_a_3_evals = self.f_a_3.to_evaluations();
@@ -131,6 +147,11 @@ impl<F: FftField> SumCheckPolynomial<F> for G<F> {
         for x_idx in 0..2usize.pow(self.x_vars_num() as u32) {
             for y_idx in 0..2usize.pow(self.y_vars_num() as u32) {
                 for z_idx in 0..2usize.pow(self.z_vars_num() as u32) {
+                    // indexing into evaluations in this order: x, y, z
+                    // and so when combining for example x and y
+                    // x always occupies the lower bits and y occupies the
+                    // higher bits in the index.
+
                     let idx_1 = idx(y_idx, x_idx, self.x_vars_num());
                     let idx_2 = idx(z_idx, y_idx, self.y_vars_num());
                     let idx_3 = idx(z_idx, x_idx, self.x_vars_num());
@@ -144,6 +165,8 @@ impl<F: FftField> SumCheckPolynomial<F> for G<F> {
     }
 }
 
+/// Combine indices of two variables into one to be able
+/// to index into evaluations of polynomial.
 fn idx(i: usize, j: usize, num_vars: usize) -> usize {
     (i << num_vars) | j
 }
