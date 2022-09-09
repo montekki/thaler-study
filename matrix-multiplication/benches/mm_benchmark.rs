@@ -4,7 +4,7 @@ use ark_ff::{Field, Fp64, MontBackend, MontConfig, One};
 use ark_std::{rand::Rng, test_rng, UniformRand};
 use bitvec::slice::BitSlice;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use matrix_multiplication::{G, G2};
+use matrix_multiplication::G;
 use sum_check_protocol::{Prover, SumCheckPolynomial};
 
 #[derive(MontConfig)]
@@ -63,7 +63,7 @@ fn u32_to_boolean_vec<F: Field>(v: u32, bits: usize) -> Vec<F> {
         .collect()
 }
 
-const NUM_ITERS: u32 = 12;
+const NUM_ITERS: u32 = 16;
 
 pub fn benchmark_g_prover(c: &mut Criterion) {
     let rng = &mut test_rng();
@@ -75,36 +75,24 @@ pub fn benchmark_g_prover(c: &mut Criterion) {
 
         let a: Matrix<Fp5> = Matrix::new(n, rng);
         let b: Matrix<Fp5> = Matrix::new(n, rng);
-        let mut point = u32_to_boolean_vec(3, p as usize);
-        point.append(&mut u32_to_boolean_vec(3, p as usize));
+        let mut point = u32_to_boolean_vec(2, p as usize);
+        point.append(&mut u32_to_boolean_vec(2, p as usize));
         let g = G::new(
-            p as usize * 2,
+            p as usize,
             a.0.iter().flatten().cloned(),
             b.0.iter().flatten().cloned(),
             &point,
         );
 
         let num_vars = g.num_vars();
-        let g2 = G2::new(3, 3, a.0.clone(), b.0.clone());
 
         group.throughput(Throughput::Elements(num_vars as u64));
 
-        group.bench_with_input(BenchmarkId::new("prove", num_vars), &n, |b, &nv| {
+        group.bench_with_input(BenchmarkId::new("prove", num_vars), &n, |b, _| {
             b.iter(|| {
                 let mut r_j = Fp5::one();
                 let mut prover = black_box(Prover::new(black_box(g.clone())));
-                for j in 0..nv {
-                    black_box(prover.round(black_box(r_j), black_box(j)).unwrap());
-
-                    r_j = Fp5::rand(rng);
-                }
-            })
-        });
-        group.bench_with_input(BenchmarkId::new("prove_method2", num_vars), &n, |b, &nv| {
-            b.iter(|| {
-                let mut r_j = Fp5::one();
-                let mut prover = black_box(Prover::new(black_box(g2.clone())));
-                for j in 0..nv {
+                for j in 0..num_vars {
                     black_box(prover.round(black_box(r_j), black_box(j)).unwrap());
 
                     r_j = Fp5::rand(rng);
