@@ -1,10 +1,8 @@
 use ark_ff::{FftField, Field};
 use ark_poly::{
-    univariate::{self, SparsePolynomial},
-    DenseMultilinearExtension, EvaluationDomain, Evaluations, GeneralEvaluationDomain,
-    MultilinearExtension,
+    univariate::SparsePolynomial, DenseMultilinearExtension, EvaluationDomain, Evaluations,
+    GeneralEvaluationDomain, MultilinearExtension,
 };
-use bitvec::{slice::BitSlice, vec::BitVec};
 use sum_check_protocol::SumCheckPolynomial;
 
 /// A polynomial of form
