@@ -23,9 +23,9 @@ fn interpolate_quadratic_poly<F: Field>(points: &[(F, F)]) -> SparsePolynomial<F
         (2, F::one()),
     ];
 
-    for i in 0..coeffs_1.len() {
-        coeffs_1[i].1 *= points[0].1;
-        coeffs_1[i].1 /= denominator_1;
+    for item in &mut coeffs_1 {
+        item.1 *= points[0].1;
+        item.1 /= denominator_1;
     }
 
     let mut coeffs_2 = vec![
@@ -34,9 +34,9 @@ fn interpolate_quadratic_poly<F: Field>(points: &[(F, F)]) -> SparsePolynomial<F
         (2, F::one()),
     ];
 
-    for i in 0..coeffs_2.len() {
-        coeffs_2[i].1 *= points[1].1;
-        coeffs_2[i].1 /= denominator_2;
+    for item in &mut coeffs_2 {
+        item.1 *= points[1].1;
+        item.1 /= denominator_2;
     }
 
     let mut coeffs_3 = vec![
@@ -45,9 +45,9 @@ fn interpolate_quadratic_poly<F: Field>(points: &[(F, F)]) -> SparsePolynomial<F
         (2, F::one()),
     ];
 
-    for i in 0..coeffs_3.len() {
-        coeffs_3[i].1 *= points[2].1;
-        coeffs_3[i].1 /= denominator_3;
+    for item in &mut coeffs_3 {
+        item.1 *= points[2].1;
+        item.1 /= denominator_3;
     }
 
     let poly_1 = SparsePolynomial::from_coefficients_vec(coeffs_1);
