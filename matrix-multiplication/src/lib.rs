@@ -1,8 +1,5 @@
 use ark_ff::{FftField, Field};
-use ark_poly::{
-    univariate::SparsePolynomial, DenseMultilinearExtension, EvaluationDomain, Evaluations,
-    GeneralEvaluationDomain, MultilinearExtension,
-};
+use ark_poly::{univariate::SparsePolynomial, DenseMultilinearExtension, MultilinearExtension};
 use sum_check_protocol::SumCheckPolynomial;
 
 /// A polynomial of form
@@ -13,6 +10,51 @@ use sum_check_protocol::SumCheckPolynomial;
 pub struct G<F: Field> {
     f_a: DenseMultilinearExtension<F>,
     f_b: DenseMultilinearExtension<F>,
+}
+
+fn interpolate_quadratic_poly<F: Field>(points: &[(F, F)]) -> SparsePolynomial<F> {
+    let denominator_1 = (points[0].0 - points[1].0) * (points[0].0 - points[2].0);
+    let denominator_2 = (points[1].0 - points[0].0) * (points[1].0 - points[2].0);
+    let denominator_3 = (points[2].0 - points[0].0) * (points[2].0 - points[1].0);
+
+    let mut coeffs_1 = vec![
+        (0, points[1].0 * points[2].0),
+        (1, -points[1].0 - points[2].0),
+        (2, F::one()),
+    ];
+
+    for i in 0..coeffs_1.len() {
+        coeffs_1[i].1 *= points[0].1;
+        coeffs_1[i].1 /= denominator_1;
+    }
+
+    let mut coeffs_2 = vec![
+        (0, points[0].0 * points[2].0),
+        (1, -points[0].0 - points[2].0),
+        (2, F::one()),
+    ];
+
+    for i in 0..coeffs_2.len() {
+        coeffs_2[i].1 *= points[1].1;
+        coeffs_2[i].1 /= denominator_2;
+    }
+
+    let mut coeffs_3 = vec![
+        (0, points[0].0 * points[1].0),
+        (1, -points[0].0 - points[1].0),
+        (2, F::one()),
+    ];
+
+    for i in 0..coeffs_3.len() {
+        coeffs_3[i].1 *= points[2].1;
+        coeffs_3[i].1 /= denominator_3;
+    }
+
+    let poly_1 = SparsePolynomial::from_coefficients_vec(coeffs_1);
+    let poly_2 = SparsePolynomial::from_coefficients_vec(coeffs_2);
+    let poly_3 = SparsePolynomial::from_coefficients_vec(coeffs_3);
+
+    poly_1 + poly_2 + poly_3
 }
 
 impl<F: Field> G<F> {
@@ -64,25 +106,26 @@ impl<F: FftField> SumCheckPolynomial<F> for G<F> {
     }
 
     fn to_univariate(&self) -> SparsePolynomial<F> {
-        let domain: GeneralEvaluationDomain<F> = GeneralEvaluationDomain::new(3).unwrap();
+        let two = F::one() + F::one();
+        let mut evals = [F::zero(); 3];
 
-        let evals = domain
-            .elements()
-            .map(|e| {
-                let f_a_evals = self.f_a.fix_variables(&[e]).to_evaluations();
-                let f_b_evals = self.f_b.fix_variables(&[e]).to_evaluations();
-                f_a_evals
-                    .into_iter()
-                    .zip(f_b_evals.into_iter())
-                    .map(|(a, b)| a * b)
-                    .sum()
-            })
-            .collect();
+        for i in 0..2usize.pow(self.num_vars() as u32) {
+            if i & 1 == 1 {
+                evals[1] += self.f_a[i] * self.f_b[i];
+                evals[2] +=
+                    (two * self.f_a[i] - self.f_a[i - 1]) * (two * self.f_b[i] - self.f_b[i - 1]);
+            } else {
+                evals[0] += self.f_a[i] * self.f_b[i];
+            }
+        }
 
-        let evaluations = Evaluations::from_vec_and_domain(evals, domain);
-        let p = evaluations.interpolate();
+        let points = vec![
+            (F::zero(), evals[0]),
+            (F::one(), evals[1]),
+            (F::one() + F::one(), evals[2]),
+        ];
 
-        p.into()
+        interpolate_quadratic_poly(&points)
     }
 
     fn num_vars(&self) -> usize {
