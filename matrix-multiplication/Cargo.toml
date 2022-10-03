@@ -16,7 +16,7 @@ multilinear-extensions = { path = "../multilinear-extensions" }
 
 [dev-dependencies]
 pretty_assertions = "1"
-criterion = { version = "0.3", features = ["html_reports"] }
+criterion = { version = "0.4", features = ["html_reports"] }
 
 ark-std = { git = "https://github.com/arkworks-rs/std" }
 
