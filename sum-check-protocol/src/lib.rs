@@ -14,6 +14,9 @@ use bitvec::slice::BitSlice;
 pub enum Error {
     #[error("prover claim mismatches evaluation {0} {1}")]
     ProverClaimMismatch(String, String),
+
+    #[error("verifier has no oracle access to the polynomial")]
+    NoPolySet,
 }
 
 /// A convenient way to iterate over $n$-dimentional boolean hypercube.
@@ -222,10 +225,11 @@ pub struct Verifier<F: Field, P: SumCheckPolynomial<F>> {
     r: Vec<F>,
 
     /// Original polynomial for oracle access
-    g: P,
+    g: Option<P>,
 }
 
 /// Values returned by Validator as a result of its run on every step.
+#[derive(Debug)]
 pub enum VerifierRoundResult<F: Field> {
     /// On $j$-th round the verifier outputs a random $r_j$ value
     JthRound(F),
@@ -241,7 +245,7 @@ impl<F: Field, P: SumCheckPolynomial<F>> Verifier<F, P> {
     /// $n$ - degree of the polynomial
     /// $C_1$ - the value claimed to be true answer by the [`Prover`].
     /// $g$ - the polynimial itself for oracle access by the [`Verifier`].
-    pub fn new(n: usize, c_1: F, g: P) -> Self {
+    pub fn new(n: usize, c_1: F, g: Option<P>) -> Self {
         Self {
             n,
             c_1,
@@ -251,7 +255,7 @@ impl<F: Field, P: SumCheckPolynomial<F>> Verifier<F, P> {
         }
     }
 
-    /// Perform the $j$-th round of the [`Verifier]` side of the protocol.
+    /// Perform the $j$-th round of the [`Verifier`] side of the protocol.
     ///
     /// $g_j$ - a univariate polynomial sent in this round by the [`Prover`].
     pub fn round<R: Rng>(
@@ -278,11 +282,15 @@ impl<F: Field, P: SumCheckPolynomial<F>> Verifier<F, P> {
             // Last round
             self.r.push(r_j);
 
-            assert_eq!(g_j.evaluate(&r_j), self.g.evaluate(&self.r).unwrap());
+            if let Some(g) = &self.g {
+                assert_eq!(g_j.evaluate(&r_j), g.evaluate(&self.r).unwrap());
 
-            Ok(VerifierRoundResult::FinalRound(
-                g_j.evaluate(&r_j) == self.g.evaluate(&self.r).unwrap(),
-            ))
+                Ok(VerifierRoundResult::FinalRound(
+                    g_j.evaluate(&r_j) == g.evaluate(&self.r).unwrap(),
+                ))
+            } else {
+                Err(Error::NoPolySet)
+            }
         } else {
             // j-th round
             let g_jprev = self.g_part.last().unwrap();
@@ -415,7 +423,7 @@ mod tests {
         let mut prover = Prover::new(g.clone());
         let c_1 = prover.c_1();
         let mut r_j = Fp5::one();
-        let mut verifier = Verifier::new(3, c_1, g);
+        let mut verifier = Verifier::new(3, c_1, Some(g));
 
         for j in 0..3 {
             let g_j = prover.round(r_j, j).unwrap();
@@ -475,7 +483,7 @@ mod tests {
             let mut prover = Prover::new(g.clone());
             let c_1 = prover.c_1();
             let mut r_j = Fp5::one();
-            let mut verifier = Verifier::new(n, c_1, g);
+            let mut verifier = Verifier::new(n, c_1, Some(g));
 
             for j in 0..n {
                 let g_j = prover.round(r_j, j).unwrap();
