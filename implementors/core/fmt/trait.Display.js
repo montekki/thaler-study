@@ -1,3 +1,3 @@
-(function() {var implementors = {};
-implementors["sum_check_protocol"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.64.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"sum_check_protocol/enum.Error.html\" title=\"enum sum_check_protocol::Error\">Error</a>","synthetic":false,"types":["sum_check_protocol::Error"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"sum_check_protocol":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.65.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"sum_check_protocol/enum.Error.html\" title=\"enum sum_check_protocol::Error\">Error</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

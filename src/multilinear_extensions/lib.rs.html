@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `multilinear-extensions/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css" integrity="sha384-Xi8rHCmBmhbuyyhbI88391ZKP2dmfnOl4rT9ZfRI7mLTdk1wblIUnrIq35nqwEvC" crossorigin="anonymous">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `multilinear-extensions/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css" integrity="sha384-Xi8rHCmBmhbuyyhbI88391ZKP2dmfnOl4rT9ZfRI7mLTdk1wblIUnrIq35nqwEvC" crossorigin="anonymous">
 
 <!-- The loading of KaTeX is deferred to speed up page rendering -->
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js" integrity="sha384-X/XCfMm41VSsqRNQgDerQczD69XqmjOOOwYQvr/uuC+j4OPoNhVgjdGFwhvN02Ja" crossorigin="anonymous"></script>
@@ -143,89 +143,89 @@
 <span id="119">119</span>
 <span id="120">120</span>
 <span id="121">121</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ark_ff::Field</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>ark_ff::Field;
 
-<span class="doccomment">/// Evaluate multilinear extension of with an algorithm from [`CTY11`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`CTY11`]: https://arxiv.org/abs/1109.6882</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">vsbw_multilinear_from_evaluations</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span>(<span class="ident">evals</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>], <span class="ident">r</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="ident">F</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">eval_table</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">F::one</span>()];
+<span class="doccomment">/// Evaluate multilinear extension of with an algorithm from [`CTY11`].
+///
+/// [`CTY11`]: https://arxiv.org/abs/1109.6882
+</span><span class="kw">pub fn </span>vsbw_multilinear_from_evaluations&lt;F: Field&gt;(evals: <span class="kw-2">&amp;</span>[F], r: <span class="kw-2">&amp;</span>[F]) -&gt; F {
+    <span class="kw">let </span><span class="kw-2">mut </span>eval_table = <span class="macro">vec!</span>[F::one()];
 
-    <span class="kw">for</span> <span class="ident">r_j</span> <span class="kw">in</span> <span class="ident">r</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">eval_table_new</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">eval_table</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="number">2</span>);
+    <span class="kw">for </span>r_j <span class="kw">in </span>r {
+        <span class="kw">let </span><span class="kw-2">mut </span>eval_table_new = Vec::with_capacity(eval_table.len() * <span class="number">2</span>);
 
-        <span class="kw">for</span> <span class="ident">eval</span> <span class="kw">in</span> <span class="ident">eval_table</span>.<span class="ident">into_iter</span>() {
-            <span class="ident">eval_table_new</span>.<span class="ident">push</span>(<span class="ident">eval</span> <span class="op">*</span> (<span class="ident">F::one</span>() <span class="op">-</span> <span class="ident">r_j</span>));
-            <span class="ident">eval_table_new</span>.<span class="ident">push</span>(<span class="ident">eval</span> <span class="op">*</span> <span class="ident">r_j</span>);
+        <span class="kw">for </span>eval <span class="kw">in </span>eval_table.into_iter() {
+            eval_table_new.push(eval * (F::one() - r_j));
+            eval_table_new.push(eval * r_j);
         }
 
-        <span class="ident">eval_table</span> <span class="op">=</span> <span class="ident">eval_table_new</span>;
+        eval_table = eval_table_new;
     }
 
-    <span class="ident">eval_table</span>
-        .<span class="ident">into_iter</span>()
-        .<span class="ident">zip</span>(<span class="ident">evals</span>.<span class="ident">iter</span>())
-        .<span class="ident">fold</span>(<span class="ident">F::zero</span>(), <span class="op">|</span><span class="ident">acc</span>, (<span class="ident">w_j</span>, <span class="ident">p_j</span>)<span class="op">|</span> <span class="ident">acc</span> <span class="op">+</span> <span class="ident">w_j</span> <span class="op">*</span> <span class="ident">p_j</span>)
+    eval_table
+        .into_iter()
+        .zip(evals.iter())
+        .fold(F::zero(), |acc, (w_j, p_j)| acc + w_j * p_j)
 }
 
-<span class="doccomment">/// Evaluate multilinear extension with an algorith from [`VSBW13`]</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`VSBW13`]: https://ieeexplore.ieee.org/document/6547112</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cti_multilinear_from_evaluations</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span>(<span class="ident">evals</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>], <span class="ident">r</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="ident">F</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">F::zero</span>();
+<span class="doccomment">/// Evaluate multilinear extension with an algorith from [`VSBW13`]
+///
+/// [`VSBW13`]: https://ieeexplore.ieee.org/document/6547112
+</span><span class="kw">pub fn </span>cti_multilinear_from_evaluations&lt;F: Field&gt;(evals: <span class="kw-2">&amp;</span>[F], r: <span class="kw-2">&amp;</span>[F]) -&gt; F {
+    <span class="kw">let </span><span class="kw-2">mut </span>res = F::zero();
 
-    <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">eval</span>) <span class="kw">in</span> <span class="ident">evals</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">w</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">r</span>.<span class="ident">len</span>());
+    <span class="kw">for </span>(i, eval) <span class="kw">in </span>evals.iter().enumerate() {
+        <span class="kw">let </span><span class="kw-2">mut </span>w = Vec::with_capacity(r.len());
 
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">r</span>.<span class="ident">len</span>();
+        <span class="kw">let </span>len = r.len();
 
-        <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> (<span class="number">0</span>..<span class="ident">len</span>).<span class="ident">rev</span>() {
-            <span class="kw">let</span> <span class="ident">bit</span> <span class="op">=</span> <span class="number">2_usize</span>.<span class="ident">pow</span>(<span class="ident">j</span> <span class="kw">as</span> <span class="ident">u32</span>);
+        <span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..len).rev() {
+            <span class="kw">let </span>bit = <span class="number">2_usize</span>.pow(j <span class="kw">as </span>u32);
 
-            <span class="kw">let</span> <span class="ident">w_j</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="ident">bit</span> <span class="op">==</span> <span class="number">0</span> { <span class="ident">F::zero</span>() } <span class="kw">else</span> { <span class="ident">F::one</span>() };
-            <span class="ident">w</span>.<span class="ident">push</span>(<span class="ident">w_j</span>);
+            <span class="kw">let </span>w_j = <span class="kw">if </span>i &amp; bit == <span class="number">0 </span>{ F::zero() } <span class="kw">else </span>{ F::one() };
+            w.push(w_j);
         }
 
-        <span class="ident">res</span> <span class="op">+</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">eval</span> <span class="op">*</span> <span class="ident">lagrange_basis_poly_at</span>(<span class="ident">r</span>, <span class="kw-2">&amp;</span><span class="ident">w</span>).<span class="ident">unwrap</span>();
+        res += <span class="kw-2">*</span>eval * lagrange_basis_poly_at(r, <span class="kw-2">&amp;</span>w).unwrap();
     }
 
-    <span class="ident">res</span>
+    res
 }
 
-<span class="kw">fn</span> <span class="ident">lagrange_basis_poly_at</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>], <span class="ident">w</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">x</span>.<span class="ident">len</span>() {
-        <span class="prelude-val">None</span>
-    } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="ident">w</span>.<span class="ident">iter</span>()).<span class="ident">fold</span>(<span class="ident">F::one</span>(), <span class="op">|</span><span class="ident">acc</span>, (<span class="kw-2">&amp;</span><span class="ident">x_i</span>, <span class="kw-2">&amp;</span><span class="ident">w_i</span>)<span class="op">|</span> {
-            <span class="ident">acc</span> <span class="op">*</span> (<span class="ident">x_i</span> <span class="op">*</span> <span class="ident">w_i</span> <span class="op">+</span> (<span class="ident">F::one</span>() <span class="op">-</span> <span class="ident">x_i</span>) <span class="op">*</span> (<span class="ident">F::one</span>() <span class="op">-</span> <span class="ident">w_i</span>))
+<span class="kw">fn </span>lagrange_basis_poly_at&lt;F: Field&gt;(x: <span class="kw-2">&amp;</span>[F], w: <span class="kw-2">&amp;</span>[F]) -&gt; <span class="prelude-ty">Option</span>&lt;F&gt; {
+    <span class="kw">if </span>x.len() != x.len() {
+        <span class="prelude-val">None
+    </span>} <span class="kw">else </span>{
+        <span class="kw">let </span>res = x.iter().zip(w.iter()).fold(F::one(), |acc, (<span class="kw-2">&amp;</span>x_i, <span class="kw-2">&amp;</span>w_i)| {
+            acc * (x_i * w_i + (F::one() - x_i) * (F::one() - w_i))
         });
 
-        <span class="prelude-val">Some</span>(<span class="ident">res</span>)
+        <span class="prelude-val">Some</span>(res)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">ark_ff</span>::{<span class="ident">Fp64</span>, <span class="ident">MontBackend</span>, <span class="ident">MontConfig</span>, <span class="ident">PrimeField</span>};
-    <span class="kw">use</span> <span class="ident">pretty_assertions::assert_eq</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>ark_ff::{Fp64, MontBackend, MontConfig, PrimeField};
+    <span class="kw">use </span>pretty_assertions::assert_eq;
 
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">MontConfig</span>)]</span>
-    <span class="attribute">#[<span class="ident">modulus</span> <span class="op">=</span> <span class="string">&quot;5&quot;</span>]</span>
-    <span class="attribute">#[<span class="ident">generator</span> <span class="op">=</span> <span class="string">&quot;2&quot;</span>]</span>
-    <span class="kw">struct</span> <span class="ident">FrConfig</span>;
+    <span class="attribute">#[derive(MontConfig)]
+    #[modulus = <span class="string">&quot;5&quot;</span>]
+    #[generator = <span class="string">&quot;2&quot;</span>]
+    </span><span class="kw">struct </span>FrConfig;
 
-    <span class="kw">type</span> <span class="ident">Fr</span> <span class="op">=</span> <span class="ident">Fp64</span><span class="op">&lt;</span><span class="ident">MontBackend</span><span class="op">&lt;</span><span class="ident">FrConfig</span>, <span class="number">1</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Fr = Fp64&lt;MontBackend&lt;FrConfig, <span class="number">1</span>&gt;&gt;;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">example_from_book</span>() {
-        <span class="kw">let</span> <span class="ident">evals</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> [<span class="number">1u32</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">4</span>]
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">f</span><span class="op">|</span> <span class="ident">Fr::from_bigint</span>(<span class="ident">f</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>())
-            .<span class="ident">collect</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>example_from_book() {
+        <span class="kw">let </span>evals: Vec&lt;<span class="kw">_</span>&gt; = [<span class="number">1u32</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">4</span>]
+            .iter()
+            .map(|<span class="kw-2">&amp;</span>f| Fr::from_bigint(f.into()).unwrap())
+            .collect();
 
-        <span class="kw">let</span> <span class="ident">expected_result</span> <span class="op">=</span> <span class="macro">vec!</span>[
+        <span class="kw">let </span>expected_result = <span class="macro">vec!</span>[
             <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">0</span>],
             <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">4</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">3</span>],
             <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>],
@@ -233,36 +233,36 @@
             <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>],
         ];
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0u32</span>..<span class="number">5</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="number">5</span>);
-            <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0u32</span>..<span class="number">5</span> {
-                <span class="kw">let</span> <span class="ident">f_r</span> <span class="op">=</span> <span class="ident">cti_multilinear_from_evaluations</span>(
-                    <span class="kw-2">&amp;</span><span class="ident">evals</span>,
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0u32</span>..<span class="number">5 </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>line = Vec::with_capacity(<span class="number">5</span>);
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">0u32</span>..<span class="number">5 </span>{
+                <span class="kw">let </span>f_r = cti_multilinear_from_evaluations(
+                    <span class="kw-2">&amp;</span>evals,
                     <span class="kw-2">&amp;</span>[
-                        <span class="ident">Fr::from_bigint</span>(<span class="ident">i</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
-                        <span class="ident">Fr::from_bigint</span>(<span class="ident">j</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
+                        Fr::from_bigint(i.into()).unwrap(),
+                        Fr::from_bigint(j.into()).unwrap(),
                     ],
                 );
-                <span class="ident">line</span>.<span class="ident">push</span>(<span class="ident">f_r</span>.<span class="ident">into_bigint</span>().<span class="ident">as_ref</span>()[<span class="number">0</span>]);
+                line.push(f_r.into_bigint().as_ref()[<span class="number">0</span>]);
             }
-            <span class="macro">assert_eq!</span>(<span class="ident">line</span>, <span class="ident">expected_result</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>], <span class="string">&quot;at line {i}&quot;</span>);
+            <span class="macro">assert_eq!</span>(line, expected_result[i <span class="kw">as </span>usize], <span class="string">&quot;at line {i}&quot;</span>);
         }
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0u32</span>..<span class="number">5</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="number">5</span>);
-            <span class="kw">for</span> <span class="ident">j</span> <span class="kw">in</span> <span class="number">0u32</span>..<span class="number">5</span> {
-                <span class="kw">let</span> <span class="ident">f_r</span> <span class="op">=</span> <span class="ident">vsbw_multilinear_from_evaluations</span>(
-                    <span class="kw-2">&amp;</span><span class="ident">evals</span>,
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0u32</span>..<span class="number">5 </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>line = Vec::with_capacity(<span class="number">5</span>);
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">0u32</span>..<span class="number">5 </span>{
+                <span class="kw">let </span>f_r = vsbw_multilinear_from_evaluations(
+                    <span class="kw-2">&amp;</span>evals,
                     <span class="kw-2">&amp;</span>[
-                        <span class="ident">Fr::from_bigint</span>(<span class="ident">i</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
-                        <span class="ident">Fr::from_bigint</span>(<span class="ident">j</span>.<span class="ident">into</span>()).<span class="ident">unwrap</span>(),
+                        Fr::from_bigint(i.into()).unwrap(),
+                        Fr::from_bigint(j.into()).unwrap(),
                     ],
                 );
-                <span class="ident">line</span>.<span class="ident">push</span>(<span class="ident">f_r</span>.<span class="ident">into_bigint</span>().<span class="ident">as_ref</span>()[<span class="number">0</span>]);
+                line.push(f_r.into_bigint().as_ref()[<span class="number">0</span>]);
             }
-            <span class="macro">assert_eq!</span>(<span class="ident">line</span>, <span class="ident">expected_result</span>[<span class="ident">i</span> <span class="kw">as</span> <span class="ident">usize</span>]);
+            <span class="macro">assert_eq!</span>(line, expected_result[i <span class="kw">as </span>usize]);
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="multilinear_extensions" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="multilinear_extensions" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
