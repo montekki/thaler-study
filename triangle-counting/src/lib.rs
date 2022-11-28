@@ -241,7 +241,7 @@ mod tests {
         ];
 
         let g: G<Fp389> =
-            G::new_adj_matrix(adj_matrix.len(), adj_matrix.iter().flatten().map(|b| *b));
+            G::new_adj_matrix(adj_matrix.len(), adj_matrix.iter().flatten().copied());
 
         let num_vars = g.num_vars();
         let mut prover = Prover::new(g.clone());
@@ -286,7 +286,7 @@ mod tests {
 
             let g: G<Fp389> = G::new_adj_matrix(
                 (f64::from(n as u32).log2() as usize) * 2,
-                test_matrix.0.iter().flatten().map(|b| *b),
+                test_matrix.0.iter().flatten().copied(),
             );
 
             let mut prover = Prover::new(g.clone());
