@@ -240,8 +240,7 @@ mod tests {
             vec![false, false, false, false],
         ];
 
-        let g: G<Fp389> =
-            G::new_adj_matrix(adj_matrix.len(), adj_matrix.iter().flatten().copied());
+        let g: G<Fp389> = G::new_adj_matrix(adj_matrix.len(), adj_matrix.iter().flatten().copied());
 
         let num_vars = g.num_vars();
         let mut prover = Prover::new(g.clone());
