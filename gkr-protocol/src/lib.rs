@@ -1,3 +1,4 @@
+#[deny(missing_docs)]
 use std::{cmp, iter};
 
 use ark_ff::{FftField, Field, Zero};
@@ -42,6 +43,7 @@ pub struct W<F: Field> {
 }
 
 impl<F: Field> W<F> {
+    /// Create a new `W` polynomial.
     pub fn new(
         add_i: DenseMultilinearExtension<F>,
         mul_i: DenseMultilinearExtension<F>,
@@ -152,12 +154,14 @@ pub struct Verifier<F: FftField> {
     state: VerifierState<F>,
 }
 
+/// The inner state of the [`Verifier`].
 enum VerifierState<F: FftField> {
     Empty,
     RunningSumCheck {
         /// $b$ and $c$.
         bc: Vec<F>,
 
+        /// Verifier.
         verifier: Box<SumCheckVerifier<F, W<F>>>,
 
         /// $add_i$
@@ -316,22 +320,27 @@ impl<F: FftField> Verifier<F> {
     }
 }
 
+/// Messages emitted by the [`Verifier`].
 #[derive(Debug)]
 pub enum VerifierMessage<F: Field> {
+    /// A result of running a step in the current sum check protocol.
     SumCheckRoundResult { res: SumCheckVerifierRoundResult<F> },
+    /// The last round has completed.
     LastRoundResult,
+    /// The first round has completed.
     FirstRound,
+    /// The j-th round has started.
     RoundStarted(usize),
 }
 
+/// Messages emitted by the [`Prover`].
 #[derive(Debug, PartialEq, Eq)]
 pub enum ProverMessage<F: Field> {
-    Begin {
-        circuit_outputs: Vec<F>,
-    },
-    SumCheckProverMessage {
-        p: univariate::SparsePolynomial<F>,
-    },
+    /// [`Prover`] begins the protocol by the claim about the outputs.
+    Begin { circuit_outputs: Vec<F> },
+    /// A step of the current sum-check protocol.
+    SumCheckProverMessage { p: univariate::SparsePolynomial<F> },
+    /// In the final the restriction polynomial $q$ is added.
     FinalRoundMessage {
         p: univariate::SparsePolynomial<F>,
 
@@ -339,6 +348,7 @@ pub enum ProverMessage<F: Field> {
         /// k_{i+1} claimed to equal $\tilde{W}_{i+1}$ to $l$
         q: univariate::SparsePolynomial<F>,
     },
+    /// Instruct the [`Verifier`] to start a Sum-Check protocol for some round.
     StartSumCheck {
         c_1: F,
         round: usize,
@@ -388,11 +398,22 @@ fn restrict_poly<F: Field, M: MultilinearExtension<F>>(
 
 /// The state of the Prover.
 pub struct Prover<F: FftField> {
+    /// Current round of the protocol.
     i: usize,
+
+    /// The circuit.
     circuit: Circuit,
+
+    /// Evaluations of the circuit on a given input.
     evaluation: CircuitEvaluation<F>,
+
+    /// A Sum-Check protocol prover.
     prover: Option<SumCheckProver<F, W<F>>>,
+
+    /// Current $\tilde{W}_{i+1}$.
     w: DenseMultilinearExtension<F>,
+
+    /// Random points collected through a single Sum-Check protocol run.
     r: Vec<F>,
 }
 
@@ -488,6 +509,7 @@ impl<F: FftField> Prover<F> {
         }
     }
 
+    /// Perform a step of the Sum-Check protocol and provide a message for the [`Verifier`].
     pub fn round_msg(&mut self, j: usize) -> ProverMessage<F> {
         if j == 2 * self.circuit.num_vars_at(self.i + 1).unwrap() - 1 {
             // The last round; do the polynomial restriction.
@@ -512,6 +534,7 @@ impl<F: FftField> Prover<F> {
         }
     }
 
+    /// Receive a message from the [`Verifier`].
     pub fn receive_verifier_msg(&mut self, verifier_msg: VerifierMessage<F>) {
         match verifier_msg {
             VerifierMessage::SumCheckRoundResult { res } => match res {
@@ -525,6 +548,7 @@ impl<F: FftField> Prover<F> {
         }
     }
 
+    /// Get the $c_1$ of the current Sum-Check prover.
     pub fn c_1(&self) -> F {
         self.prover.as_ref().unwrap().c_1()
     }
