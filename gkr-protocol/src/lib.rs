@@ -16,8 +16,11 @@ mod circuit;
 
 use circuit::{Circuit, CircuitEvaluation};
 
-#[derive(Debug)]
-pub enum Error {}
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Verifier is in the wrong state.")]
+    WrongVerifierState,
+}
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -139,26 +142,30 @@ pub struct Verifier<F: FftField> {
     /// $r_0, r_1,..., r_n$.
     r: Vec<Vec<F>>,
 
-    /// $m_0$.
+    /// $m$.
     m: Vec<F>,
-
-    /// $b$ and $c$.
-    bc: Vec<F>,
-
-    /// Sum Check Verifier for the current circuit layer
-    verifier: Option<SumCheckVerifier<F, W<F>>>,
 
     /// Circuit
     circuit: Circuit,
 
-    /// $add_i$
-    add_i: DenseMultilinearExtension<F>,
+    /// State of the verifier.
+    state: VerifierState<F>,
+}
 
-    /// $mul_i$
-    mul_i: DenseMultilinearExtension<F>,
+enum VerifierState<F: FftField> {
+    Empty,
+    RunningSumCheck {
+        /// $b$ and $c$.
+        bc: Vec<F>,
 
-    /// Current layer.
-    i: usize,
+        verifier: Box<SumCheckVerifier<F, W<F>>>,
+
+        /// $add_i$
+        add_i: DenseMultilinearExtension<F>,
+
+        /// $mul_i$
+        mul_i: DenseMultilinearExtension<F>,
+    },
 }
 
 impl<F: FftField> Verifier<F> {
@@ -175,31 +182,96 @@ impl<F: FftField> Verifier<F> {
         Self {
             r: vec![],
             m: vec![],
-            bc: vec![],
-            verifier: None,
             circuit,
-            i: 0,
-            add_i: Default::default(),
-            mul_i: Default::default(),
+            state: VerifierState::Empty,
         }
     }
 
-    pub fn start_round(&mut self, c_1: F, round: usize, num_vars: usize) {
-        self.add_i = self.circuit.add_i_ext(self.r.last().unwrap(), round);
-        self.mul_i = self.circuit.mul_i_ext(self.r.last().unwrap(), round);
-        self.i = round;
-        self.verifier = Some(SumCheckVerifier::new(num_vars, c_1, None));
-        self.bc = vec![];
+    fn start_round(&mut self, c_1: F, round: usize, num_vars: usize) -> Result<VerifierMessage<F>> {
+        let add_i = self.circuit.add_i_ext(self.r.last().unwrap(), round);
+        let mul_i = self.circuit.mul_i_ext(self.r.last().unwrap(), round);
+        let verifier = SumCheckVerifier::new(num_vars, c_1, None);
+        let bc = vec![];
+
+        self.state = VerifierState::RunningSumCheck {
+            bc,
+            verifier: Box::new(verifier),
+            add_i,
+            mul_i,
+        };
+
+        Ok(VerifierMessage::RoundStarted(round))
     }
 
     pub fn r(&self, i: usize) -> Vec<F> {
         self.r[i].clone()
     }
 
-    pub fn final_random_point<R: Rng>(&mut self, rng: &mut R) -> F {
-        let final_point = F::rand(rng);
-        self.bc.push(final_point);
-        final_point
+    pub fn final_random_point<R: Rng>(&mut self, rng: &mut R) -> Result<F> {
+        if let VerifierState::RunningSumCheck { bc, .. } = &mut self.state {
+            let final_point = F::rand(rng);
+            bc.push(final_point);
+
+            Ok(final_point)
+        } else {
+            Err(Error::WrongVerifierState)
+        }
+    }
+
+    fn sum_check_step<R: Rng>(
+        &mut self,
+        message: univariate::SparsePolynomial<F>,
+        rng: &mut R,
+    ) -> Result<VerifierMessage<F>> {
+        if let VerifierState::RunningSumCheck { bc, verifier, .. } = &mut self.state {
+            let res = verifier.round(message, rng).unwrap();
+
+            if let SumCheckVerifierRoundResult::JthRound(point) = res {
+                bc.push(point);
+            }
+
+            Ok(VerifierMessage::SumCheckRoundResult { res })
+        } else {
+            Err(Error::WrongVerifierState)
+        }
+    }
+
+    fn final_round_message<R: Rng>(
+        &mut self,
+        p: univariate::SparsePolynomial<F>,
+        q: univariate::SparsePolynomial<F>,
+        rng: &mut R,
+    ) -> Result<VerifierMessage<F>> {
+        if let VerifierState::RunningSumCheck {
+            bc, add_i, mul_i, ..
+        } = &self.state
+        {
+            /*
+             * TODO: check q degree
+             */
+            let q_0 = q.evaluate(&F::zero());
+            let q_1 = q.evaluate(&F::one());
+
+            let eval =
+                add_i.evaluate(bc).unwrap() * (q_0 + q_1) + mul_i.evaluate(bc).unwrap() * q_0 * q_1;
+
+            assert_eq!(eval, p.evaluate(bc.last().unwrap()));
+
+            let r = F::rand(rng);
+            let (b, c) = bc.split_at(bc.len() / 2);
+
+            let line = line(b, c);
+
+            let r_next: Vec<F> = line.into_iter().map(|e| e.evaluate(&r)).collect();
+            let m_next = q.evaluate(&r);
+
+            self.r.push(r_next);
+            self.m.push(m_next);
+
+            Ok(VerifierMessage::LastRoundResult)
+        } else {
+            Err(Error::WrongVerifierState)
+        }
     }
 
     pub fn receive_prover_msg<R: Rng>(
@@ -208,41 +280,13 @@ impl<F: FftField> Verifier<F> {
         rng: &mut R,
     ) -> Result<VerifierMessage<F>> {
         match msg {
-            ProverMessage::SumCheckProverMessage { p } => {
-                let res = self.verifier.as_mut().unwrap().round(p, rng).unwrap();
-
-                if let SumCheckVerifierRoundResult::JthRound(point) = res {
-                    self.bc.push(point);
-                }
-
-                Ok(VerifierMessage::SumCheckRoundResult { res })
-            }
-            ProverMessage::FinalRoundMessage { p, q } => {
-                /*
-                 * TODO: check q degree
-                 */
-
-                let q_0 = q.evaluate(&F::zero());
-                let q_1 = q.evaluate(&F::one());
-
-                let eval = self.add_i.evaluate(&self.bc).unwrap() * (q_0 + q_1)
-                    + self.mul_i.evaluate(&self.bc).unwrap() * q_0 * q_1;
-
-                assert_eq!(eval, p.evaluate(self.bc.last().unwrap()));
-
-                let r = F::rand(rng);
-                let (b, c) = self.bc.split_at(self.bc.len() / 2);
-
-                let line = line(b, c);
-
-                let r_next: Vec<F> = line.into_iter().map(|e| e.evaluate(&r)).collect();
-                let m_next = q.evaluate(&r);
-
-                self.r.push(r_next);
-                self.m.push(m_next);
-
-                Ok(VerifierMessage::LastRoundResult)
-            }
+            ProverMessage::SumCheckProverMessage { p } => self.sum_check_step(p, rng),
+            ProverMessage::StartSumCheck {
+                c_1,
+                round,
+                num_vars,
+            } => self.start_round(c_1, round, num_vars),
+            ProverMessage::FinalRoundMessage { p, q } => self.final_round_message(p, q, rng),
             ProverMessage::Begin { circuit_outputs } => {
                 let num_output_vars = self.circuit.num_vars_at(0).unwrap();
                 let d = DenseMultilinearExtension::from_evaluations_slice(
@@ -253,10 +297,6 @@ impl<F: FftField> Verifier<F> {
                 let r_zero: Vec<_> = (0..num_output_vars).map(|_| F::rand(rng)).collect();
 
                 let m_zero = d.evaluate(&r_zero).unwrap();
-
-                self.add_i = self.circuit.add_i_ext(&r_zero, 0);
-
-                self.mul_i = self.circuit.mul_i_ext(&r_zero, 0);
 
                 self.r = vec![r_zero];
                 self.m = vec![m_zero];
@@ -281,6 +321,7 @@ pub enum VerifierMessage<F: Field> {
     SumCheckRoundResult { res: SumCheckVerifierRoundResult<F> },
     LastRoundResult,
     FirstRound,
+    RoundStarted(usize),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -297,6 +338,11 @@ pub enum ProverMessage<F: Field> {
         /// Sends a univariate polynomial $q$ of degree at most
         /// k_{i+1} claimed to equal $\tilde{W}_{i+1}$ to $l$
         q: univariate::SparsePolynomial<F>,
+    },
+    StartSumCheck {
+        c_1: F,
+        round: usize,
+        num_vars: usize,
     },
 }
 
@@ -379,7 +425,7 @@ impl<F: FftField> Prover<F> {
     ///
     /// At round $i$ a Sum-Check prover for polynomial
     /// $f^{(i)}_{r_i}(b, c)$.
-    pub fn start_round(&mut self, i: usize, r_i: &[F]) {
+    pub fn start_round(&mut self, i: usize, r_i: &[F]) -> ProverMessage<F> {
         let num_vars_current = self.circuit.num_vars_at(i).unwrap();
 
         let num_vars_next = self.circuit.num_vars_at(i + 1).unwrap();
@@ -422,13 +468,24 @@ impl<F: FftField> Prover<F> {
         let add_i = add_i.fix_variables(r_i);
         let mult_i = mult_i.fix_variables(r_i);
 
+        let num_vars = add_i.num_vars();
+
         assert_eq!(add_i.num_vars(), mult_i.num_vars());
         assert_eq!(add_i.num_vars(), 2 * w_b.num_vars());
 
         let w = W::new(add_i, mult_i, w_b, w_c);
         self.i = i;
-        self.prover = Some(SumCheckProver::new(w));
+
+        let prover = SumCheckProver::new(w);
+        let c_1 = prover.c_1();
+        self.prover = Some(prover);
         self.r = vec![];
+
+        ProverMessage::StartSumCheck {
+            c_1,
+            round: i,
+            num_vars,
+        }
     }
 
     pub fn round_msg(&mut self, j: usize) -> ProverMessage<F> {
@@ -464,7 +521,7 @@ impl<F: FftField> Prover<F> {
                 SumCheckVerifierRoundResult::FinalRound(_) => panic!(),
             },
             VerifierMessage::LastRoundResult => panic!(),
-            VerifierMessage::FirstRound => (),
+            _ => (),
         }
     }
 
@@ -591,12 +648,11 @@ mod tests {
 
         for i in 0..circuit.layers().len() {
             let r_i = verifier.r(i);
-            prover.start_round(i, &r_i);
+            let msg = prover.start_round(i, &r_i);
 
-            let c_1 = prover.c_1();
             let num_vars = 2 * circuit.num_vars_at(i + 1).unwrap();
 
-            verifier.start_round(c_1, i, num_vars);
+            verifier.receive_prover_msg(msg, rng).unwrap();
 
             for j in 0..(num_vars - 1) {
                 let prover_msg = prover.round_msg(j);
@@ -606,7 +662,7 @@ mod tests {
                 prover.receive_verifier_msg(verifier_msg);
             }
 
-            let last_rand = verifier.final_random_point(rng);
+            let last_rand = verifier.final_random_point(rng).unwrap();
             prover.receive_verifier_msg(VerifierMessage::SumCheckRoundResult {
                 res: SumCheckVerifierRoundResult::JthRound(last_rand),
             });
@@ -669,12 +725,9 @@ mod tests {
 
         for i in 0..circuit.layers().len() {
             let r_i = verifier.r(i);
-            prover.start_round(i, &r_i);
-
-            let c_1 = prover.c_1();
+            let prover_msg = prover.start_round(i, &r_i);
+            verifier.receive_prover_msg(prover_msg, rng).unwrap();
             let num_vars = 2 * circuit.num_vars_at(i + 1).unwrap();
-
-            verifier.start_round(c_1, i, num_vars);
 
             for j in 0..(num_vars - 1) {
                 let prover_msg = prover.round_msg(j);
@@ -684,7 +737,7 @@ mod tests {
                 prover.receive_verifier_msg(verifier_msg);
             }
 
-            let last_rand = verifier.final_random_point(rng);
+            let last_rand = verifier.final_random_point(rng).unwrap();
             prover.receive_verifier_msg(VerifierMessage::SumCheckRoundResult {
                 res: SumCheckVerifierRoundResult::JthRound(last_rand),
             });
