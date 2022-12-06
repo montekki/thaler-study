@@ -1,4 +1,8 @@
-#[deny(missing_docs)]
+#![deny(unused_crate_dependencies)]
+#![deny(missing_docs)]
+
+//! The implementation of the GKR protocol.
+
 use std::{cmp, iter};
 
 use ark_ff::{FftField, Field, Zero};
@@ -17,12 +21,15 @@ mod circuit;
 
 use circuit::{Circuit, CircuitEvaluation};
 
+/// GKR protocol error type.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// Wrong state.
     #[error("Verifier is in the wrong state.")]
     WrongVerifierState,
 }
 
+/// GKR protocol result type.
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// A $2k_{i+1}$ variate polynomial used for each step of GKR protocol.
@@ -207,10 +214,12 @@ impl<F: FftField> Verifier<F> {
         Ok(VerifierMessage::RoundStarted(round))
     }
 
+    /// Get the $r_i$.
     pub fn r(&self, i: usize) -> Vec<F> {
         self.r[i].clone()
     }
 
+    /// Final random point in the Sum-Check protocol.
     pub fn final_random_point<R: Rng>(&mut self, rng: &mut R) -> Result<F> {
         if let VerifierState::RunningSumCheck { bc, .. } = &mut self.state {
             let final_point = F::rand(rng);
@@ -278,6 +287,7 @@ impl<F: FftField> Verifier<F> {
         }
     }
 
+    /// Receive a message from [`Prover`].
     pub fn receive_prover_msg<R: Rng>(
         &mut self,
         msg: ProverMessage<F>,
@@ -310,6 +320,7 @@ impl<F: FftField> Verifier<F> {
         }
     }
 
+    /// Perform the final check of the input.
     pub fn check_input(&self, input: &[F]) -> bool {
         let w = DenseMultilinearExtension::from_evaluations_slice(
             (f64::from(input.len() as u32)).log2() as usize,
@@ -324,7 +335,10 @@ impl<F: FftField> Verifier<F> {
 #[derive(Debug)]
 pub enum VerifierMessage<F: Field> {
     /// A result of running a step in the current sum check protocol.
-    SumCheckRoundResult { res: SumCheckVerifierRoundResult<F> },
+    SumCheckRoundResult {
+        /// Result of a Sum-Check round.
+        res: SumCheckVerifierRoundResult<F>,
+    },
     /// The last round has completed.
     LastRoundResult,
     /// The first round has completed.
@@ -337,11 +351,18 @@ pub enum VerifierMessage<F: Field> {
 #[derive(Debug, PartialEq, Eq)]
 pub enum ProverMessage<F: Field> {
     /// [`Prover`] begins the protocol by the claim about the outputs.
-    Begin { circuit_outputs: Vec<F> },
+    Begin {
+        /// Claimed outputs
+        circuit_outputs: Vec<F>,
+    },
     /// A step of the current sum-check protocol.
-    SumCheckProverMessage { p: univariate::SparsePolynomial<F> },
+    SumCheckProverMessage {
+        /// A polynomial sent at each step of Sum-Check.
+        p: univariate::SparsePolynomial<F>,
+    },
     /// In the final the restriction polynomial $q$ is added.
     FinalRoundMessage {
+        /// A polynomial sent at each step of Sum-Check.
         p: univariate::SparsePolynomial<F>,
 
         /// Sends a univariate polynomial $q$ of degree at most
@@ -350,8 +371,13 @@ pub enum ProverMessage<F: Field> {
     },
     /// Instruct the [`Verifier`] to start a Sum-Check protocol for some round.
     StartSumCheck {
+        /// A $c_1$ from Sum-Check protocol.
         c_1: F,
+
+        /// At which round of GKR this Sum-Check is being started.
         round: usize,
+
+        /// A number of variables.
         num_vars: usize,
     },
 }
