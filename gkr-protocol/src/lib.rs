@@ -102,18 +102,15 @@ impl<F: FftField> Verifier<F> {
         Ok(VerifierMessage::RoundStarted(round))
     }
 
-    /// Get the $r_i$.
-    pub fn r(&self, i: usize) -> Vec<F> {
-        self.r[i].clone()
-    }
-
     /// Final random point in the Sum-Check protocol.
-    pub fn final_random_point<R: Rng>(&mut self, rng: &mut R) -> Result<F> {
+    pub fn final_random_point<R: Rng>(&mut self, rng: &mut R) -> Result<VerifierMessage<F>> {
         if let VerifierState::RunningSumCheck { bc, .. } = &mut self.state {
             let final_point = F::rand(rng);
             bc.push(final_point);
 
-            Ok(final_point)
+            Ok(VerifierMessage::SumCheckRoundResult {
+                res: SumCheckVerifierRoundResult::JthRound(final_point),
+            })
         } else {
             Err(Error::WrongVerifierState)
         }
@@ -166,10 +163,10 @@ impl<F: FftField> Verifier<F> {
             let r_next: Vec<F> = line.into_iter().map(|e| e.evaluate(&r)).collect();
             let m_next = q.evaluate(&r);
 
-            self.r.push(r_next);
+            self.r.push(r_next.clone());
             self.m.push(m_next);
 
-            Ok(VerifierMessage::LastRoundResult)
+            Ok(VerifierMessage::R { r: r_next })
         } else {
             Err(Error::WrongVerifierState)
         }
@@ -200,10 +197,10 @@ impl<F: FftField> Verifier<F> {
 
                 let m_zero = d.evaluate(&r_zero).unwrap();
 
-                self.r = vec![r_zero];
+                self.r = vec![r_zero.clone()];
                 self.m = vec![m_zero];
 
-                Ok(VerifierMessage::FirstRound)
+                Ok(VerifierMessage::R { r: r_zero })
             }
         }
     }
@@ -227,12 +224,18 @@ pub enum VerifierMessage<F: Field> {
         /// Result of a Sum-Check round.
         res: SumCheckVerifierRoundResult<F>,
     },
-    /// The last round has completed.
-    LastRoundResult,
+
     /// The first round has completed.
     FirstRound,
+
     /// The j-th round has started.
     RoundStarted(usize),
+
+    /// Sends out the $r_i$ to be used by the [`Prover`].
+    R {
+        /// $r_i$
+        r: Vec<F>,
+    },
 }
 
 /// Messages emitted by the [`Prover`].
@@ -457,7 +460,6 @@ impl<F: FftField> Prover<F> {
                 }
                 SumCheckVerifierRoundResult::FinalRound(_) => panic!(),
             },
-            VerifierMessage::LastRoundResult => panic!(),
             _ => (),
         }
     }
@@ -580,12 +582,16 @@ mod tests {
         );
 
         let mut verifier = Verifier::new(circuit.clone());
-        verifier
+        let verifier_message = verifier
             .receive_prover_msg(circuit_outputs_message, rng)
             .unwrap();
 
+        let mut r_i = match verifier_message {
+            VerifierMessage::R { r } => r,
+            _ => panic!(),
+        };
+
         for i in 0..circuit.layers().len() {
-            let r_i = verifier.r(i);
             let msg = prover.start_round(i, &r_i);
 
             let num_vars = 2 * circuit.num_vars_at(i + 1).unwrap();
@@ -601,14 +607,12 @@ mod tests {
             }
 
             let last_rand = verifier.final_random_point(rng).unwrap();
-            prover.receive_verifier_msg(VerifierMessage::SumCheckRoundResult {
-                res: SumCheckVerifierRoundResult::JthRound(last_rand),
-            });
+            prover.receive_verifier_msg(last_rand);
 
             let prover_msg = prover.round_msg(num_vars - 1);
             let verifier_msg = verifier.receive_prover_msg(prover_msg, rng).unwrap();
             match verifier_msg {
-                VerifierMessage::LastRoundResult => (),
+                VerifierMessage::R { r } => r_i = r,
                 _ => panic!("{:?}", verifier_msg),
             }
         }
@@ -657,14 +661,19 @@ mod tests {
 
         let mut verifier = Verifier::new(circuit.clone());
 
-        verifier
+        let verifier_message = verifier
             .receive_prover_msg(circuit_outputs_message, rng)
             .unwrap();
 
+        let mut r_i = match verifier_message {
+            VerifierMessage::R { r } => r,
+            _ => panic!(),
+        };
+
         for i in 0..circuit.layers().len() {
-            let r_i = verifier.r(i);
             let prover_msg = prover.start_round(i, &r_i);
             verifier.receive_prover_msg(prover_msg, rng).unwrap();
+
             let num_vars = 2 * circuit.num_vars_at(i + 1).unwrap();
 
             for j in 0..(num_vars - 1) {
@@ -676,15 +685,13 @@ mod tests {
             }
 
             let last_rand = verifier.final_random_point(rng).unwrap();
-            prover.receive_verifier_msg(VerifierMessage::SumCheckRoundResult {
-                res: SumCheckVerifierRoundResult::JthRound(last_rand),
-            });
+            prover.receive_verifier_msg(last_rand);
 
             let prover_msg = prover.round_msg(num_vars - 1);
             let verifier_msg = verifier.receive_prover_msg(prover_msg, rng).unwrap();
 
             match verifier_msg {
-                VerifierMessage::LastRoundResult => (),
+                VerifierMessage::R { r } => r_i = r,
                 _ => panic!("{:?}", verifier_msg),
             }
         }
