@@ -453,14 +453,13 @@ impl<F: FftField> Prover<F> {
 
     /// Receive a message from the [`Verifier`].
     pub fn receive_verifier_msg(&mut self, verifier_msg: VerifierMessage<F>) {
-        match verifier_msg {
-            VerifierMessage::SumCheckRoundResult { res } => match res {
+        if let VerifierMessage::SumCheckRoundResult { res } = verifier_msg {
+            match res {
                 SumCheckVerifierRoundResult::JthRound(r_j) => {
                     self.r.push(r_j);
                 }
                 SumCheckVerifierRoundResult::FinalRound(_) => panic!(),
-            },
-            _ => (),
+            }
         }
     }
 
