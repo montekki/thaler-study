@@ -85,7 +85,7 @@ impl<F: FftField> SumCheckPolynomial<F> for W<F> {
         }
     }
 
-    fn to_univariate(&self) -> ark_poly::univariate::SparsePolynomial<F> {
+    fn to_univariate(&self) -> univariate::SparsePolynomial<F> {
         let domain = GeneralEvaluationDomain::new(3).unwrap();
 
         let evals = domain
@@ -151,7 +151,7 @@ pub struct Verifier<F: FftField> {
     /// Circuit
     circuit: Circuit,
 
-    /// %add_i$
+    /// $add_i$
     add_i: DenseMultilinearExtension<F>,
 
     /// $mul_i$
@@ -171,36 +171,21 @@ impl<F: FftField> Verifier<F> {
     /// The remainder of the protocol is devoted to confirming
     /// that
     /// $m_0 = \tilde{W}_0(r_0)$
-    pub fn new<R: Rng>(num_outputs: usize, d: &[F], circuit: Circuit, rng: &mut R) -> Self {
-        let num_vars = f64::from(num_outputs as u32).log2() as usize;
-        let d = DenseMultilinearExtension::from_evaluations_slice(num_vars, d);
-
-        let r_zero: Vec<_> = (0..num_vars).map(|_| F::rand(rng)).collect();
-
-        let m_zero = d.evaluate(&r_zero).unwrap();
-
-        let add_i = circuit.add_i_ext(&r_zero, 0);
-
-        let mul_i = circuit.mul_i_ext(&r_zero, 0);
-
-        let r = vec![r_zero];
-        let m = vec![m_zero];
-
+    pub fn new(circuit: Circuit) -> Self {
         Self {
-            r,
-            m,
+            r: vec![],
+            m: vec![],
             bc: vec![],
             verifier: None,
             circuit,
             i: 0,
-            add_i,
-            mul_i,
+            add_i: Default::default(),
+            mul_i: Default::default(),
         }
     }
 
     pub fn start_round(&mut self, c_1: F, round: usize, num_vars: usize) {
         self.add_i = self.circuit.add_i_ext(self.r.last().unwrap(), round);
-
         self.mul_i = self.circuit.mul_i_ext(self.r.last().unwrap(), round);
         self.i = round;
         self.verifier = Some(SumCheckVerifier::new(num_vars, c_1, None));
@@ -258,6 +243,26 @@ impl<F: FftField> Verifier<F> {
 
                 Ok(VerifierMessage::LastRoundResult)
             }
+            ProverMessage::Begin { circuit_outputs } => {
+                let num_output_vars = self.circuit.num_vars_at(0).unwrap();
+                let d = DenseMultilinearExtension::from_evaluations_slice(
+                    num_output_vars,
+                    &circuit_outputs,
+                );
+
+                let r_zero: Vec<_> = (0..num_output_vars).map(|_| F::rand(rng)).collect();
+
+                let m_zero = d.evaluate(&r_zero).unwrap();
+
+                self.add_i = self.circuit.add_i_ext(&r_zero, 0);
+
+                self.mul_i = self.circuit.mul_i_ext(&r_zero, 0);
+
+                self.r = vec![r_zero];
+                self.m = vec![m_zero];
+
+                Ok(VerifierMessage::FirstRound)
+            }
         }
     }
 
@@ -275,10 +280,14 @@ impl<F: FftField> Verifier<F> {
 pub enum VerifierMessage<F: Field> {
     SumCheckRoundResult { res: SumCheckVerifierRoundResult<F> },
     LastRoundResult,
+    FirstRound,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ProverMessage<F: Field> {
+    Begin {
+        circuit_outputs: Vec<F>,
+    },
     SumCheckProverMessage {
         p: univariate::SparsePolynomial<F>,
     },
@@ -360,8 +369,10 @@ impl<F: FftField> Prover<F> {
     /// $D: \lbrace 0, 1 \rbrace ^{k_0} \rightarrow \mathbb{F}$
     /// claimed to equal $W_0$ (the function mapping output gate
     /// labels to output values).
-    pub fn start_protocol(&self) -> Vec<F> {
-        self.evaluation.layers.first().unwrap().clone()
+    pub fn start_protocol(&self) -> ProverMessage<F> {
+        ProverMessage::Begin {
+            circuit_outputs: self.evaluation.layers.first().unwrap().clone(),
+        }
     }
 
     /// Create a Sum-Check prover for round $i$.
@@ -452,7 +463,8 @@ impl<F: FftField> Prover<F> {
                 }
                 SumCheckVerifierRoundResult::FinalRound(_) => panic!(),
             },
-            VerifierMessage::LastRoundResult => (),
+            VerifierMessage::LastRoundResult => panic!(),
+            VerifierMessage::FirstRound => (),
         }
     }
 
@@ -559,17 +571,23 @@ mod tests {
             Fp389::from_bigint(6u32.into()).unwrap(),
         ];
 
-        let num_outputs = circuit.num_outputs();
-
         let mut prover = Prover::new(circuit.clone(), &input);
 
         // At the start of the protocol Prover sends a function $W_0$
         // mapping output gate labels to output values.
-        let circuit_outputs = prover.start_protocol();
+        let circuit_outputs_message = prover.start_protocol();
 
-        assert_eq!(circuit_outputs, expected_outputs);
+        assert_eq!(
+            circuit_outputs_message,
+            ProverMessage::Begin {
+                circuit_outputs: expected_outputs.to_vec()
+            }
+        );
 
-        let mut verifier = Verifier::new(num_outputs, &circuit_outputs, circuit.clone(), rng);
+        let mut verifier = Verifier::new(circuit.clone());
+        verifier
+            .receive_prover_msg(circuit_outputs_message, rng)
+            .unwrap();
 
         for i in 0..circuit.layers().len() {
             let r_i = verifier.r(i);
@@ -634,16 +652,20 @@ mod tests {
 
         let mut prover = Prover::new(circuit.clone(), &input);
 
-        let circuit_outputs = prover.start_protocol();
+        let circuit_outputs_message = prover.start_protocol();
 
-        assert_eq!(circuit_outputs, expected_outputs);
-
-        let mut verifier = Verifier::new(
-            circuit.num_outputs(),
-            &circuit_outputs,
-            circuit.clone(),
-            rng,
+        assert_eq!(
+            circuit_outputs_message,
+            ProverMessage::Begin {
+                circuit_outputs: expected_outputs.to_vec()
+            }
         );
+
+        let mut verifier = Verifier::new(circuit.clone());
+
+        verifier
+            .receive_prover_msg(circuit_outputs_message, rng)
+            .unwrap();
 
         for i in 0..circuit.layers().len() {
             let r_i = verifier.r(i);
