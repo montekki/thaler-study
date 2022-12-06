@@ -6,6 +6,7 @@ edition = "2021"
 [workspace]
 
 members = [
+    "gkr-protocol",
     "matrix-multiplication",
     "multilinear-extensions",
     "triangle-counting",

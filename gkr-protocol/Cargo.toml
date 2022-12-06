@@ -1,0 +1,16 @@
+[package]
+name = "gkr-protocol"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
+ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+ark-std = { git = "https://github.com/arkworks-rs/std" }
+
+sum-check-protocol = { path = "../sum-check-protocol" }
+
+thiserror = "1.0.31"
+
+[dev-dependencies]
+pretty_assertions = "1"
