@@ -517,6 +517,14 @@
 <span id="493">493</span>
 <span id="494">494</span>
 <span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 
 <span class="kw">use </span>ark_ff::{Field, Zero};
@@ -533,6 +541,9 @@
 </span><span class="kw">pub enum </span>Error {
     <span class="attribute">#[error(<span class="string">&quot;prover claim mismatches evaluation {0} {1}&quot;</span>)]
     </span>ProverClaimMismatch(String, String),
+
+    <span class="attribute">#[error(<span class="string">&quot;verifier has no oracle access to the polynomial&quot;</span>)]
+    </span>NoPolySet,
 }
 
 <span class="doccomment">/// A convenient way to iterate over $n$-dimentional boolean hypercube.
@@ -741,10 +752,11 @@
     </span>r: Vec&lt;F&gt;,
 
     <span class="doccomment">/// Original polynomial for oracle access
-    </span>g: P,
+    </span>g: <span class="prelude-ty">Option</span>&lt;P&gt;,
 }
 
 <span class="doccomment">/// Values returned by Validator as a result of its run on every step.
+</span><span class="attribute">#[derive(Debug)]
 </span><span class="kw">pub enum </span>VerifierRoundResult&lt;F: Field&gt; {
     <span class="doccomment">/// On $j$-th round the verifier outputs a random $r_j$ value
     </span>JthRound(F),
@@ -760,7 +772,7 @@
     /// $n$ - degree of the polynomial
     /// $C_1$ - the value claimed to be true answer by the [`Prover`].
     /// $g$ - the polynimial itself for oracle access by the [`Verifier`].
-    </span><span class="kw">pub fn </span>new(n: usize, c_1: F, g: P) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(n: usize, c_1: F, g: <span class="prelude-ty">Option</span>&lt;P&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             n,
             c_1,
@@ -770,7 +782,7 @@
         }
     }
 
-    <span class="doccomment">/// Perform the $j$-th round of the [`Verifier]` side of the protocol.
+    <span class="doccomment">/// Perform the $j$-th round of the [`Verifier`] side of the protocol.
     ///
     /// $g_j$ - a univariate polynomial sent in this round by the [`Prover`].
     </span><span class="kw">pub fn </span>round&lt;R: Rng&gt;(
@@ -797,11 +809,15 @@
             <span class="comment">// Last round
             </span><span class="self">self</span>.r.push(r_j);
 
-            <span class="macro">assert_eq!</span>(g_j.evaluate(<span class="kw-2">&amp;</span>r_j), <span class="self">self</span>.g.evaluate(<span class="kw-2">&amp;</span><span class="self">self</span>.r).unwrap());
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(g) = <span class="kw-2">&amp;</span><span class="self">self</span>.g {
+                <span class="macro">assert_eq!</span>(g_j.evaluate(<span class="kw-2">&amp;</span>r_j), g.evaluate(<span class="kw-2">&amp;</span><span class="self">self</span>.r).unwrap());
 
-            <span class="prelude-val">Ok</span>(VerifierRoundResult::FinalRound(
-                g_j.evaluate(<span class="kw-2">&amp;</span>r_j) == <span class="self">self</span>.g.evaluate(<span class="kw-2">&amp;</span><span class="self">self</span>.r).unwrap(),
-            ))
+                <span class="prelude-val">Ok</span>(VerifierRoundResult::FinalRound(
+                    g_j.evaluate(<span class="kw-2">&amp;</span>r_j) == g.evaluate(<span class="kw-2">&amp;</span><span class="self">self</span>.r).unwrap(),
+                ))
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(Error::NoPolySet)
+            }
         } <span class="kw">else </span>{
             <span class="comment">// j-th round
             </span><span class="kw">let </span>g_jprev = <span class="self">self</span>.g_part.last().unwrap();
@@ -934,7 +950,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>prover = Prover::new(g.clone());
         <span class="kw">let </span>c_1 = prover.c_1();
         <span class="kw">let </span><span class="kw-2">mut </span>r_j = Fp5::one();
-        <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(<span class="number">3</span>, c_1, g);
+        <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(<span class="number">3</span>, c_1, <span class="prelude-val">Some</span>(g));
 
         <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="number">3 </span>{
             <span class="kw">let </span>g_j = prover.round(r_j, j).unwrap();
@@ -994,7 +1010,7 @@
             <span class="kw">let </span><span class="kw-2">mut </span>prover = Prover::new(g.clone());
             <span class="kw">let </span>c_1 = prover.c_1();
             <span class="kw">let </span><span class="kw-2">mut </span>r_j = Fp5::one();
-            <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(n, c_1, g);
+            <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(n, c_1, <span class="prelude-val">Some</span>(g));
 
             <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..n {
                 <span class="kw">let </span>g_j = prover.round(r_j, j).unwrap();

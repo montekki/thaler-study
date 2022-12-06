@@ -588,7 +588,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>prover = Prover::new(g.clone());
         <span class="kw">let </span>c_1 = prover.c_1();
         <span class="kw">let </span><span class="kw-2">mut </span>r_j = Fp389::one();
-        <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, c_1, g);
+        <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, c_1, <span class="prelude-val">Some</span>(g));
 
         <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..num_vars {
             <span class="kw">let </span>g_j = prover.round(r_j, j).unwrap();
@@ -643,7 +643,7 @@
 
             <span class="kw">let </span><span class="kw-2">mut </span>r_j = Fp389::one();
             <span class="kw">let </span>num_vars = g.num_vars();
-            <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, c_1, g);
+            <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, c_1, <span class="prelude-val">Some</span>(g));
 
             <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..num_vars {
                 <span class="kw">let </span>g_j = prover.round(r_j, j).unwrap();

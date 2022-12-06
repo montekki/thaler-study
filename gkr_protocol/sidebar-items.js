@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Error","GKR protocol error type."],["ProverMessage","Messages emitted by the [`Prover`]."],["VerifierMessage","Messages emitted by the [`Verifier`]."]],"struct":[["Prover","The state of the Prover."],["Verifier","The state of the Verifier."]],"type":[["Result","GKR protocol result type."]]};
