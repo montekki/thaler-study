@@ -93,7 +93,7 @@ pub fn benchmark_g_prover(c: &mut Criterion) {
                 let mut r_j = Fp5::one();
                 let mut prover = black_box(Prover::new(black_box(g.clone())));
                 for j in 0..num_vars {
-                    black_box(prover.round(black_box(r_j), black_box(j)).unwrap());
+                    black_box(prover.round(black_box(r_j), black_box(j)));
 
                     r_j = Fp5::rand(rng);
                 }
