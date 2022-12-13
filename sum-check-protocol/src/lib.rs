@@ -109,7 +109,7 @@ impl<F: Field, P: SumCheckPolynomial<F>> Prover<F, P> {
             self.r.push(r_prev);
             self.g = self.g.fix_variables(&[r_prev]);
         }
-        
+
         self.g.to_univariate()
     }
 
