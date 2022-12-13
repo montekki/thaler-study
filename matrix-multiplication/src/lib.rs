@@ -287,7 +287,7 @@ mod tests {
                 let mut verifier = Verifier::new(num_vars, Some(g));
                 verifier.set_c_1(c_1);
                 for k in 0..num_vars {
-                    let g_j = prover.round(r_j, k).unwrap();
+                    let g_j = prover.round(r_j, k);
                     let verifier_res = verifier.round(g_j, rng).unwrap();
 
                     match verifier_res {
@@ -360,7 +360,7 @@ mod tests {
                     verifier.set_c_1(c_1);
 
                     for j in 0..num_vars {
-                        let g_j = prover.round(r_j, j).unwrap();
+                        let g_j = prover.round(r_j, j);
                         let verifier_res = verifier.round(g_j, rng).unwrap();
 
                         match verifier_res {
