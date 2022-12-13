@@ -9,6 +9,16 @@ use ark_poly::{
 use ark_std::rand::Rng;
 use bitvec::slice::BitSlice;
 
+pub trait RngF<F> {
+    fn draw(&mut self) -> F;
+}
+
+impl<F: Field, T: Rng> RngF<F> for T {
+    fn draw(&mut self) -> F {
+        F::rand(self)
+    }
+}
+
 /// An error type of sum check protocol
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -72,6 +82,7 @@ pub struct Prover<F: Field, P: SumCheckPolynomial<F>> {
     /// Random values $r_1,...,r_j$ sent by the [`Verifier`] in the
     /// previous rounds.
     r: Vec<F>,
+    num_vars: usize,
 }
 
 impl<F: Field, P: SumCheckPolynomial<F>> Prover<F, P> {
@@ -82,6 +93,7 @@ impl<F: Field, P: SumCheckPolynomial<F>> Prover<F, P> {
         Self {
             g,
             c_1,
+            num_vars,
             r: Vec::with_capacity(num_vars),
         }
     }
@@ -92,13 +104,17 @@ impl<F: Field, P: SumCheckPolynomial<F>> Prover<F, P> {
     }
 
     /// Perform $j$-th round of the [`Prover`] side of the prococol.
-    pub fn round(&mut self, r_prev: F, j: usize) -> Option<univariate::SparsePolynomial<F>> {
+    pub fn round(&mut self, r_prev: F, j: usize) -> univariate::SparsePolynomial<F> {
         if j != 0 {
             self.r.push(r_prev);
             self.g = self.g.fix_variables(&[r_prev]);
         }
         let res = self.g.to_univariate();
-        Some(res)
+        res
+    }
+
+    pub fn num_vars(&self) -> usize {
+        self.num_vars
     }
 }
 
@@ -245,25 +261,29 @@ impl<F: Field, P: SumCheckPolynomial<F>> Verifier<F, P> {
     /// $n$ - degree of the polynomial
     /// $C_1$ - the value claimed to be true answer by the [`Prover`].
     /// $g$ - the polynimial itself for oracle access by the [`Verifier`].
-    pub fn new(n: usize, c_1: F, g: Option<P>) -> Self {
+    pub fn new(n: usize, g: Option<P>) -> Self {
         Self {
             n,
-            c_1,
+            c_1: F::zero(),
             g_part: Vec::with_capacity(n),
             r: Vec::with_capacity(n),
             g,
         }
     }
 
+    pub fn set_c_1(&mut self, c_1: F) {
+        self.c_1 = c_1;
+    }
+
     /// Perform the $j$-th round of the [`Verifier`] side of the protocol.
     ///
     /// $g_j$ - a univariate polynomial sent in this round by the [`Prover`].
-    pub fn round<R: Rng>(
+    pub fn round<R: RngF<F>>(
         &mut self,
         g_j: univariate::SparsePolynomial<F>,
         rng: &mut R,
     ) -> Result<VerifierRoundResult<F>, Error> {
-        let r_j = F::rand(rng);
+        let r_j = rng.draw();
         if self.r.is_empty() {
             // First Round
             let evaluation = g_j.evaluate(&F::zero()) + g_j.evaluate(&F::one());
@@ -423,10 +443,11 @@ mod tests {
         let mut prover = Prover::new(g.clone());
         let c_1 = prover.c_1();
         let mut r_j = Fp5::one();
-        let mut verifier = Verifier::new(3, c_1, Some(g));
+        let mut verifier = Verifier::new(3, Some(g));
+        verifier.set_c_1(c_1);
 
         for j in 0..3 {
-            let g_j = prover.round(r_j, j).unwrap();
+            let g_j = prover.round(r_j, j);
             let verifier_res = verifier.round(g_j, rng).unwrap();
             match verifier_res {
                 VerifierRoundResult::JthRound(r) => {
@@ -483,10 +504,11 @@ mod tests {
             let mut prover = Prover::new(g.clone());
             let c_1 = prover.c_1();
             let mut r_j = Fp5::one();
-            let mut verifier = Verifier::new(n, c_1, Some(g));
+            let mut verifier = Verifier::new(n, Some(g));
+            verifier.set_c_1(c_1);
 
             for j in 0..n {
-                let g_j = prover.round(r_j, j).unwrap();
+                let g_j = prover.round(r_j, j);
                 let verifier_res = verifier.round(g_j, rng).unwrap();
                 match verifier_res {
                     VerifierRoundResult::JthRound(r) => {

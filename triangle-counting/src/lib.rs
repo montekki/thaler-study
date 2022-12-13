@@ -246,10 +246,11 @@ mod tests {
         let mut prover = Prover::new(g.clone());
         let c_1 = prover.c_1();
         let mut r_j = Fp389::one();
-        let mut verifier = Verifier::new(num_vars, c_1, Some(g));
+        let mut verifier = Verifier::new(num_vars, Some(g));
+        verifier.set_c_1(c_1);
 
         for j in 0..num_vars {
-            let g_j = prover.round(r_j, j).unwrap();
+            let g_j = prover.round(r_j, j);
             let verifier_res = verifier.round(g_j, rng).unwrap();
             match verifier_res {
                 VerifierRoundResult::JthRound(r) => {
@@ -301,10 +302,11 @@ mod tests {
 
             let mut r_j = Fp389::one();
             let num_vars = g.num_vars();
-            let mut verifier = Verifier::new(num_vars, c_1, Some(g));
+            let mut verifier = Verifier::new(num_vars, Some(g));
+            verifier.set_c_1(c_1);
 
             for j in 0..num_vars {
-                let g_j = prover.round(r_j, j).unwrap();
+                let g_j = prover.round(r_j, j);
                 let verifier_res = verifier.round(g_j, rng).unwrap();
                 match verifier_res {
                     VerifierRoundResult::JthRound(r) => r_j = r,
