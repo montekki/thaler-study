@@ -7,6 +7,7 @@ edition = "2021"
 
 members = [
     "gkr-protocol",
+    "fiat-shamir",
     "matrix-multiplication",
     "multilinear-extensions",
     "triangle-counting",

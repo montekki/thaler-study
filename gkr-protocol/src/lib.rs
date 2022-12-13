@@ -89,7 +89,9 @@ impl<F: FftField> Verifier<F> {
     fn start_round(&mut self, c_1: F, round: usize, num_vars: usize) -> Result<VerifierMessage<F>> {
         let add_i = self.circuit.add_i_ext(self.r.last().unwrap(), round);
         let mul_i = self.circuit.mul_i_ext(self.r.last().unwrap(), round);
-        let verifier = SumCheckVerifier::new(num_vars, c_1, None);
+        let mut verifier = SumCheckVerifier::new(num_vars, None);
+        verifier.set_c_1(c_1);
+
         let bc = vec![];
 
         self.state = VerifierState::RunningSumCheck {
@@ -434,19 +436,14 @@ impl<F: FftField> Prover<F> {
 
             let q = restrict_poly(b, c, &self.w);
 
-            let p = self
-                .prover
-                .as_mut()
-                .unwrap()
-                .round(self.r[j - 1], j)
-                .unwrap();
+            let p = self.prover.as_mut().unwrap().round(self.r[j - 1], j);
             ProverMessage::FinalRoundMessage { p, q }
         } else {
             // Just a Sum-Check round
             let point = if j == 0 { F::one() } else { self.r[j - 1] };
 
             ProverMessage::SumCheckProverMessage {
-                p: self.prover.as_mut().unwrap().round(point, j).unwrap(),
+                p: self.prover.as_mut().unwrap().round(point, j),
             }
         }
     }
