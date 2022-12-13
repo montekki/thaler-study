@@ -658,8 +658,8 @@
             <span class="self">self</span>.r.push(r_prev);
             <span class="self">self</span>.g = <span class="self">self</span>.g.fix_variables(<span class="kw-2">&amp;</span>[r_prev]);
         }
-        <span class="kw">let </span>res = <span class="self">self</span>.g.to_univariate();
-        res
+
+        <span class="self">self</span>.g.to_univariate()
     }
 
     <span class="kw">pub fn </span>num_vars(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
