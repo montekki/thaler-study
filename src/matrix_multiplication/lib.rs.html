@@ -397,6 +397,8 @@
 <span id="373">373</span>
 <span id="374">374</span>
 <span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
 </pre><pre class="rust"><code><span class="kw">use </span>ark_ff::{FftField, Field};
 <span class="kw">use </span>ark_poly::{univariate::SparsePolynomial, DenseMultilinearExtension, MultilinearExtension};
 <span class="kw">use </span>sum_check_protocol::SumCheckPolynomial;
@@ -683,9 +685,10 @@
                 <span class="kw">let </span>num_vars = g.num_vars();
                 <span class="kw">let </span><span class="kw-2">mut </span>r_j = Fp5::one();
 
-                <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, c_1, <span class="prelude-val">Some</span>(g));
+                <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, <span class="prelude-val">Some</span>(g));
+                verifier.set_c_1(c_1);
                 <span class="kw">for </span>k <span class="kw">in </span><span class="number">0</span>..num_vars {
-                    <span class="kw">let </span>g_j = prover.round(r_j, k).unwrap();
+                    <span class="kw">let </span>g_j = prover.round(r_j, k);
                     <span class="kw">let </span>verifier_res = verifier.round(g_j, rng).unwrap();
 
                     <span class="kw">match </span>verifier_res {
@@ -754,10 +757,11 @@
                     <span class="kw">let </span>num_vars = g.num_vars();
 
                     <span class="kw">let </span><span class="kw-2">mut </span>r_j = Fp5::one();
-                    <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, c_1, <span class="prelude-val">Some</span>(g));
+                    <span class="kw">let </span><span class="kw-2">mut </span>verifier = Verifier::new(num_vars, <span class="prelude-val">Some</span>(g));
+                    verifier.set_c_1(c_1);
 
                     <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..num_vars {
-                        <span class="kw">let </span>g_j = prover.round(r_j, j).unwrap();
+                        <span class="kw">let </span>g_j = prover.round(r_j, j);
                         <span class="kw">let </span>verifier_res = verifier.round(g_j, rng).unwrap();
 
                         <span class="kw">match </span>verifier_res {

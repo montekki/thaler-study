@@ -719,9 +719,6 @@
 <span id="695">695</span>
 <span id="696">696</span>
 <span id="697">697</span>
-<span id="698">698</span>
-<span id="699">699</span>
-<span id="700">700</span>
 </pre><pre class="rust"><code><span class="attribute">#![deny(unused_crate_dependencies)]
 #![deny(missing_docs)]
 
@@ -813,7 +810,9 @@
     <span class="kw">fn </span>start_round(<span class="kw-2">&amp;mut </span><span class="self">self</span>, c_1: F, round: usize, num_vars: usize) -&gt; <span class="prelude-ty">Result</span>&lt;VerifierMessage&lt;F&gt;&gt; {
         <span class="kw">let </span>add_i = <span class="self">self</span>.circuit.add_i_ext(<span class="self">self</span>.r.last().unwrap(), round);
         <span class="kw">let </span>mul_i = <span class="self">self</span>.circuit.mul_i_ext(<span class="self">self</span>.r.last().unwrap(), round);
-        <span class="kw">let </span>verifier = SumCheckVerifier::new(num_vars, c_1, <span class="prelude-val">None</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>verifier = SumCheckVerifier::new(num_vars, <span class="prelude-val">None</span>);
+        verifier.set_c_1(c_1);
+
         <span class="kw">let </span>bc = <span class="macro">vec!</span>[];
 
         <span class="self">self</span>.state = VerifierState::RunningSumCheck {
@@ -1158,19 +1157,14 @@
 
             <span class="kw">let </span>q = restrict_poly(b, c, <span class="kw-2">&amp;</span><span class="self">self</span>.w);
 
-            <span class="kw">let </span>p = <span class="self">self
-                </span>.prover
-                .as_mut()
-                .unwrap()
-                .round(<span class="self">self</span>.r[j - <span class="number">1</span>], j)
-                .unwrap();
+            <span class="kw">let </span>p = <span class="self">self</span>.prover.as_mut().unwrap().round(<span class="self">self</span>.r[j - <span class="number">1</span>], j);
             ProverMessage::FinalRoundMessage { p, q }
         } <span class="kw">else </span>{
             <span class="comment">// Just a Sum-Check round
             </span><span class="kw">let </span>point = <span class="kw">if </span>j == <span class="number">0 </span>{ F::one() } <span class="kw">else </span>{ <span class="self">self</span>.r[j - <span class="number">1</span>] };
 
             ProverMessage::SumCheckProverMessage {
-                p: <span class="self">self</span>.prover.as_mut().unwrap().round(point, j).unwrap(),
+                p: <span class="self">self</span>.prover.as_mut().unwrap().round(point, j),
             }
         }
     }
