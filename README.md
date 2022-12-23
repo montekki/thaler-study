@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/montekki/thaler-study/branch/master/graph/badge.svg)](https://codecov.io/gh/montekki/thaler-study)
+
 A repository holding code implementations from the book
 [Proofs, Arguments and Zero Knowledge] in Rust. The posts
 describing the implementations can be found at my
