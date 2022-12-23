@@ -1,5 +1,6 @@
 [![codecov](https://codecov.io/gh/montekki/thaler-study/branch/master/graph/badge.svg)](https://codecov.io/gh/montekki/thaler-study)
 [![build](https://github.com/montekki/thaler-study/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/montekki/thaler-study/actions/workflows/ci.yml)
+[![dependency status](https://deps.rs/repo/github/montekki/thaler-study/status.svg)](https://deps.rs/repo/github/montekki/thaler-study)
 
 A repository holding code implementations from the book
 [Proofs, Arguments and Zero Knowledge] in Rust. The posts
