@@ -1,0 +1,20 @@
+[package]
+name = "relaxed-pcs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ark-crypto-primitives = { git = "https://github.com/arkworks-rs/crypto-primitives", branch = "release-0.4" }
+ark-ed-on-bls12-381 = { git = "https://github.com/arkworks-rs/curves" }
+ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
+ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+ark-serialize = { git = "https://github.com/arkworks-rs/algebra" }
+ark-std = { git = "https://github.com/arkworks-rs/std" }
+
+itertools = "0.10.5"
+
+gkr-protocol = { path = "../gkr-protocol" }
+thiserror = "1.0.38"
+
+[dev-dependencies]
+pretty_assertions = "1"
