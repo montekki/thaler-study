@@ -1,4 +1,9 @@
-use std::{borrow::Borrow, collections::HashMap, marker::PhantomData};
+#![deny(unused_crate_dependencies)]
+#![deny(missing_docs)]
+
+//! The implementation of the Relaxed PCS protocol.
+
+use std::{borrow::Borrow, collections::HashMap};
 
 use ark_crypto_primitives::{
     crh::{CRHScheme, TwoToOneCRHScheme},
@@ -13,6 +18,8 @@ use gkr_protocol::{line, restrict_poly};
 
 mod permutations;
 
+/// Crate error type.
+#[allow(missing_docs)]
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -29,16 +36,23 @@ pub enum Error {
 
     #[error("Compression error")]
     CompressionError,
+
+    #[error("Prover claim degree mismatch")]
+    DegreeMismatch,
 }
 
+/// Crate `Result` type.
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Iterate over all possible values of a finite field.
 pub trait IF: Field {
+    /// Type of the values.
     type Values: IntoIterator<Item = Self>;
 
+    /// Get all values of the type.
     fn all_values() -> Self::Values;
 
+    /// Get all permutations of the values of the type.
     fn all_multidimentional_values(m: usize) -> Vec<Vec<Self>> {
         let mut res: Vec<_> =
             permutations::permutations(&Self::all_values().into_iter().collect::<Vec<_>>(), m)
@@ -47,6 +61,8 @@ pub trait IF: Field {
         res
     }
 }
+
+/// The Verifier in the Relaxed PCS protocol.
 pub struct Verifier<F: Field, P: Config<Leaf = [u8]>> {
     x: F,
     degree: usize,
@@ -57,14 +73,10 @@ pub struct Verifier<F: Field, P: Config<Leaf = [u8]>> {
     merkle_root: P::InnerDigest,
     leaf_chr_params: LeafParam<P>,
     two_to_one_params: TwoToOneParam<P>,
-    __f: PhantomData<F>,
-}
-
-pub enum VerifierMessage<F: Field> {
-    RandomLineChallenge { b: Vec<F>, c: Vec<F> },
 }
 
 impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
+    /// Create a new Verifier.
     pub fn new(
         num_vars: usize,
         degree: usize,
@@ -79,13 +91,13 @@ impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
             line: vec![],
             prover_univariate: None,
             num_vars,
-            __f: PhantomData,
             merkle_root,
             leaf_chr_params,
             two_to_one_params,
         }
     }
 
+    /// Generate a random line to challenge the `Prover`.
     pub fn random_line<R: Rng>(&mut self, rng: &mut R) -> (Vec<F>, Vec<F>) {
         let b: Vec<F> = (0..self.num_vars).map(|_| F::rand(rng)).collect();
         let c: Vec<F> = (0..self.num_vars).map(|_| F::rand(rng)).collect();
@@ -93,11 +105,16 @@ impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
         (b, c)
     }
 
-    pub fn commited_univariate(&mut self, p: univariate::SparsePolynomial<F>) {
-        assert_eq!(p.degree(), self.degree);
+    /// Receive the commited univariate polynomial from Prover.
+    pub fn commited_univariate(&mut self, p: univariate::SparsePolynomial<F>) -> Result<()> {
+        if p.degree() != self.degree {
+            return Err(Error::DegreeMismatch);
+        }
         self.prover_univariate = Some(p);
+        Ok(())
     }
 
+    /// Challenge the prover at some point.
     pub fn challenge_prover<R: Rng>(&mut self, rng: &mut R) -> Vec<F> {
         self.x = F::rand(rng);
         self.challenge_point = self
@@ -108,6 +125,7 @@ impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
         self.challenge_point.clone()
     }
 
+    /// Verify the prover's reply.
     pub fn verify_prover_reply(&self, path: Path<P>, leaf: F) -> Result<()> {
         let leaf_bytes = to_uncompressed_bytes!(leaf).map_err(|_| Error::CompressionError)?;
 
@@ -133,19 +151,18 @@ impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
     }
 }
 
+/// Prover in the Relaxed PCS protocol.
 pub struct Prover<F: Field, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> {
     tree: MerkleTree<P>,
     values_convenience_map: HashMap<Vec<F>, usize>,
     poly: M,
     values: Vec<F>,
-    __p: PhantomData<P>,
-    __f: PhantomData<F>,
 }
 
 impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> Prover<F, M, P> {
+    /// Create a new Prover.
     pub fn new(
         poly: M,
-
         leaf_chr_params: <<P as Config>::LeafHash as CRHScheme>::Parameters,
         two_to_one_params: <<P as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
     ) -> Result<Self> {
@@ -192,19 +209,20 @@ impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> Prover<F, M, P> 
             poly,
             values_convenience_map,
             values,
-            __p: PhantomData,
-            __f: PhantomData,
         })
     }
 
+    /// Get the merkle root.
     pub fn merkle_root(&self) -> P::InnerDigest {
         self.tree.root()
     }
 
+    /// Restrict to line.
     pub fn poly_restriction_to_line(&self, b: &[F], c: &[F]) -> univariate::SparsePolynomial<F> {
         restrict_poly(b, c, &self.poly)
     }
 
+    /// Challenge
     pub fn challenge(&self, point: Vec<F>) -> Result<(Path<P>, F)> {
         let point_index = self.values_convenience_map.get(&point).unwrap();
         Ok((
@@ -301,7 +319,7 @@ mod tests {
         let point = verifier.challenge_prover(rng);
         let (proof, value) = prover.challenge(point).unwrap();
 
-        verifier.commited_univariate(restriction);
+        verifier.commited_univariate(restriction).unwrap();
 
         verifier.verify_prover_reply(proof, value).unwrap();
     }
