@@ -275,7 +275,8 @@ pub enum ProverMessage<F: Field> {
     },
 }
 
-fn line<F: Field>(b: &[F], c: &[F]) -> Vec<univariate::SparsePolynomial<F>> {
+/// Compute a line
+pub fn line<F: Field>(b: &[F], c: &[F]) -> Vec<univariate::SparsePolynomial<F>> {
     iter::zip(b, c)
         .map(|(b, c)| {
             univariate::SparsePolynomial::from_coefficients_slice(&[(0, *b), (1, *c - b)])
@@ -283,7 +284,12 @@ fn line<F: Field>(b: &[F], c: &[F]) -> Vec<univariate::SparsePolynomial<F>> {
         .collect()
 }
 
-fn restrict_poly<F: Field, M: MultilinearExtension<F>>(
+/// Restrict a polynomial to a given line.
+///
+/// Given two points $b,c \in \mathbb{F}^{\log n}$ create a line $l$
+/// such that $l(0) = b$ and $l(1) = c$ and restrict an MLE $\tilde{W}$
+/// to this line outputting a univariate polynomial.
+pub fn restrict_poly<F: Field, M: MultilinearExtension<F>>(
     b: &[F],
     c: &[F],
     mle: &M,

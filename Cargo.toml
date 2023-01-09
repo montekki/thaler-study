@@ -5,6 +5,7 @@ members = [
     "fiat-shamir",
     "matrix-multiplication",
     "multilinear-extensions",
+    "relaxed-pcs",
     "triangle-counting",
     "sum-check-protocol",
 ]

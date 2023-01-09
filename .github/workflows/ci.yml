@@ -75,6 +75,7 @@ jobs:
 
   codecov:
     name: CodeCov
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -95,7 +96,7 @@ jobs:
           args: '--all -- --test-threads 1'
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v3
         with:
           token: ${{secrets.CODECOV_TOKEN}}
 
