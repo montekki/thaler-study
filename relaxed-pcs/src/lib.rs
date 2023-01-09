@@ -3,12 +3,12 @@
 
 //! The implementation of the Relaxed PCS protocol.
 
-use std::{borrow::Borrow, collections::HashMap};
+use std::collections::HashMap;
 
 use ark_crypto_primitives::{
     crh::{CRHScheme, TwoToOneCRHScheme},
     merkle_tree::{Config, LeafParam, TwoToOneParam},
-    to_uncompressed_bytes, MerkleTree, Path,
+    MerkleTree, Path,
 };
 use ark_ff::Field;
 use ark_poly::{univariate, MultilinearExtension, Polynomial};
@@ -35,7 +35,7 @@ pub enum Error {
     PolyEvalDimMismatch,
 
     #[error("Compression error")]
-    CompressionError,
+    ToBytesError,
 
     #[error("Prover claim degree mismatch")]
     DegreeMismatch,
@@ -63,7 +63,7 @@ pub trait IF: Field {
 }
 
 /// The Verifier in the Relaxed PCS protocol.
-pub struct Verifier<F: Field, P: Config<Leaf = [u8]>> {
+pub struct Verifier<F: Field, P: Config<Leaf = F>> {
     x: F,
     degree: usize,
     challenge_point: Vec<F>,
@@ -75,7 +75,7 @@ pub struct Verifier<F: Field, P: Config<Leaf = [u8]>> {
     two_to_one_params: TwoToOneParam<P>,
 }
 
-impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
+impl<F: Field, P: Config<Leaf = F>> Verifier<F, P> {
     /// Create a new Verifier.
     pub fn new(
         num_vars: usize,
@@ -127,13 +127,11 @@ impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
 
     /// Verify the prover's reply.
     pub fn verify_prover_reply(&self, path: Path<P>, leaf: F) -> Result<()> {
-        let leaf_bytes = to_uncompressed_bytes!(leaf).map_err(|_| Error::CompressionError)?;
-
         path.verify(
             &self.leaf_chr_params,
             &self.two_to_one_params,
             &self.merkle_root,
-            leaf_bytes,
+            leaf,
         )?;
 
         let eval = self
@@ -152,14 +150,14 @@ impl<F: Field, P: Config<Leaf = [u8]>> Verifier<F, P> {
 }
 
 /// Prover in the Relaxed PCS protocol.
-pub struct Prover<F: Field, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> {
+pub struct Prover<F: Field, M: MultilinearExtension<F>, P: Config<Leaf = F>> {
     tree: MerkleTree<P>,
     values_convenience_map: HashMap<Vec<F>, usize>,
     poly: M,
     values: Vec<F>,
 }
 
-impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> Prover<F, M, P> {
+impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = F>> Prover<F, M, P> {
     /// Create a new Prover.
     pub fn new(
         poly: M,
@@ -175,17 +173,11 @@ impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> Prover<F, M, P> 
         let all_poly_values = all_poly_values?;
 
         let all_values_len = all_poly_values.len();
-        let values: Result<Vec<_>> = all_poly_values
+        let values: Vec<_> = all_poly_values
             .iter()
-            .map(|value| to_uncompressed_bytes!(value).map_err(|_| Error::CompressionError))
-            .chain(
-                (all_values_len..all_values_len.next_power_of_two()).map(|_| {
-                    to_uncompressed_bytes!(F::zero()).map_err(|_| Error::CompressionError)
-                }),
-            )
+            .cloned()
+            .chain((all_values_len..all_values_len.next_power_of_two()).map(|_| F::zero()))
             .collect();
-
-        let values = values?;
 
         let values_convenience_map = all_values
             .iter()
@@ -196,14 +188,6 @@ impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> Prover<F, M, P> 
         let tree: MerkleTree<P> =
             MerkleTree::new(&leaf_chr_params, &two_to_one_params, values.clone())?;
 
-        let values: Result<Vec<_>> = values
-            .into_iter()
-            .map(|bytes| {
-                F::deserialize_uncompressed(bytes.as_slice()).map_err(|_| Error::CompressionError)
-            })
-            .collect();
-
-        let values = values?;
         Ok(Self {
             tree,
             poly,
@@ -234,6 +218,8 @@ impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = [u8]>> Prover<F, M, P> 
 
 #[cfg(test)]
 mod tests {
+    use std::{borrow::Borrow, marker::PhantomData};
+
     use super::*;
 
     use ark_poly::DenseMultilinearExtension;
@@ -243,7 +229,7 @@ mod tests {
     use ark_crypto_primitives::{
         crh::{pedersen, TwoToOneCRHScheme},
         merkle_tree::{ByteDigestConverter, Config},
-        CRHScheme, MerkleTree,
+        to_uncompressed_bytes, CRHScheme, MerkleTree,
     };
     use ark_ed_on_bls12_381::EdwardsProjective as JubJub;
     use ark_ff::{Fp64, MontBackend, MontConfig};
@@ -258,21 +244,47 @@ mod tests {
     type LeafH = pedersen::CRH<JubJub, Window4x256>;
     type CompressH = pedersen::TwoToOneCRH<JubJub, Window4x256>;
 
-    struct JubJubMerkleTreeParams;
+    struct CHROverField<F> {
+        __f: PhantomData<F>,
+    }
 
-    impl Config for JubJubMerkleTreeParams {
-        type Leaf = [u8];
+    impl<F: Field> CRHScheme for CHROverField<F> {
+        type Input = F;
+
+        type Output = <LeafH as CRHScheme>::Output;
+
+        type Parameters = <LeafH as CRHScheme>::Parameters;
+
+        fn setup<R: Rng>(
+            r: &mut R,
+        ) -> std::result::Result<Self::Parameters, ark_crypto_primitives::Error> {
+            LeafH::setup(r)
+        }
+
+        fn evaluate<T: Borrow<Self::Input>>(
+            parameters: &Self::Parameters,
+            input: T,
+        ) -> std::result::Result<Self::Output, ark_crypto_primitives::Error> {
+            let bytes = to_uncompressed_bytes!(input).map_err(|_| Box::new(Error::ToBytesError))?;
+            LeafH::evaluate(parameters, bytes.as_ref())
+        }
+    }
+
+    struct JubJubMerkleTreeParamsFp5;
+
+    impl Config for JubJubMerkleTreeParamsFp5 {
+        type Leaf = Fp5;
 
         type LeafDigest = <LeafH as CRHScheme>::Output;
         type LeafInnerDigestConverter = ByteDigestConverter<Self::LeafDigest>;
         type InnerDigest = <CompressH as TwoToOneCRHScheme>::Output;
 
-        type LeafHash = LeafH;
+        type LeafHash = CHROverField<Fp5>;
         type TwoToOneHash = CompressH;
     }
 
     #[allow(unused)]
-    type JubJubMerkleTree = MerkleTree<JubJubMerkleTreeParams>;
+    type JubJubMerkleTree = MerkleTree<JubJubMerkleTreeParamsFp5>;
 
     #[derive(MontConfig)]
     #[modulus = "5"]
@@ -304,12 +316,12 @@ mod tests {
         let prover: Prover<
             Fp5,
             DenseMultilinearExtension<ark_ff::Fp<MontBackend<FrConfig, 1>, 1>>,
-            JubJubMerkleTreeParams,
+            JubJubMerkleTreeParamsFp5,
         > = Prover::new(poly, leaf_chr_params.clone(), two_to_one_params.clone()).unwrap();
 
         let root = prover.merkle_root();
 
-        let mut verifier: Verifier<Fp5, JubJubMerkleTreeParams> =
+        let mut verifier: Verifier<Fp5, JubJubMerkleTreeParamsFp5> =
             Verifier::new(num_vars, degree, root, leaf_chr_params, two_to_one_params);
 
         let rand_line = verifier.random_line(rng);
