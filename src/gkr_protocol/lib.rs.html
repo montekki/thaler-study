@@ -719,6 +719,12 @@
 <span id="695">695</span>
 <span id="696">696</span>
 <span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
 </pre><pre class="rust"><code><span class="attribute">#![deny(unused_crate_dependencies)]
 #![deny(missing_docs)]
 
@@ -996,7 +1002,8 @@
     },
 }
 
-<span class="kw">fn </span>line&lt;F: Field&gt;(b: <span class="kw-2">&amp;</span>[F], c: <span class="kw-2">&amp;</span>[F]) -&gt; Vec&lt;univariate::SparsePolynomial&lt;F&gt;&gt; {
+<span class="doccomment">/// Compute a line
+</span><span class="kw">pub fn </span>line&lt;F: Field&gt;(b: <span class="kw-2">&amp;</span>[F], c: <span class="kw-2">&amp;</span>[F]) -&gt; Vec&lt;univariate::SparsePolynomial&lt;F&gt;&gt; {
     iter::zip(b, c)
         .map(|(b, c)| {
             univariate::SparsePolynomial::from_coefficients_slice(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="kw-2">*</span>b), (<span class="number">1</span>, <span class="kw-2">*</span>c - b)])
@@ -1004,7 +1011,12 @@
         .collect()
 }
 
-<span class="kw">fn </span>restrict_poly&lt;F: Field, M: MultilinearExtension&lt;F&gt;&gt;(
+<span class="doccomment">/// Restrict a polynomial to a given line.
+///
+/// Given two points $b,c \in \mathbb{F}^{\log n}$ create a line $l$
+/// such that $l(0) = b$ and $l(1) = c$ and restrict an MLE $\tilde{W}$
+/// to this line outputting a univariate polynomial.
+</span><span class="kw">pub fn </span>restrict_poly&lt;F: Field, M: MultilinearExtension&lt;F&gt;&gt;(
     b: <span class="kw-2">&amp;</span>[F],
     c: <span class="kw-2">&amp;</span>[F],
     mle: <span class="kw-2">&amp;</span>M,
