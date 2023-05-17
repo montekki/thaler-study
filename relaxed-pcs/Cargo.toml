@@ -4,14 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ark-crypto-primitives = { git = "https://github.com/arkworks-rs/crypto-primitives", branch = "release-0.4" }
-ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
-ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
-ark-std = { git = "https://github.com/arkworks-rs/std" }
+ark-crypto-primitives = { version = "0.4", features = ["merkle_tree"] }
+ark-ff = "0.4"
+ark-poly = "0.4"
+ark-std = "0.4"
 
 gkr-protocol = { path = "../gkr-protocol" }
 thiserror = "1.0.38"
 
 [dev-dependencies]
-ark-ed-on-bls12-381 = { git = "https://github.com/arkworks-rs/curves" }
+ark-ed-on-bls12-381 = "0.4"
 pretty_assertions = "1"

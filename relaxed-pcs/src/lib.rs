@@ -7,8 +7,7 @@ use std::collections::HashMap;
 
 use ark_crypto_primitives::{
     crh::{CRHScheme, TwoToOneCRHScheme},
-    merkle_tree::{Config, LeafParam, TwoToOneParam},
-    MerkleTree, Path,
+    merkle_tree::{Config, LeafParam, MerkleTree, Path, TwoToOneParam},
 };
 use ark_ff::Field;
 use ark_poly::{univariate, MultilinearExtension, Polynomial};
@@ -227,9 +226,9 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use ark_crypto_primitives::{
-        crh::{pedersen, TwoToOneCRHScheme},
-        merkle_tree::{ByteDigestConverter, Config},
-        to_uncompressed_bytes, CRHScheme, MerkleTree,
+        crh::{pedersen, CRHScheme, TwoToOneCRHScheme},
+        merkle_tree::{ByteDigestConverter, Config, MerkleTree},
+        to_uncompressed_bytes,
     };
     use ark_ed_on_bls12_381::EdwardsProjective as JubJub;
     use ark_ff::{Fp64, MontBackend, MontConfig};

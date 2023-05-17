@@ -220,7 +220,6 @@ impl<F: Field> SumCheckPolynomial<F> for multivariate::SparsePolynomial<F, Spars
 
     fn to_evaluations(&self) -> Vec<F> {
         BooleanHypercube::new(DenseMVPolynomial::num_vars(self) as u32)
-            .into_iter()
             .map(|point| Polynomial::evaluate(self, &point))
             .collect()
     }

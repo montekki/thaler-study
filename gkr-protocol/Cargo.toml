@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
-ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
-ark-std = { git = "https://github.com/arkworks-rs/std" }
+ark-ff = "0.4"
+ark-poly = "0.4"
+ark-std = "0.4"
 
 sum-check-protocol = { path = "../sum-check-protocol" }
 

@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 bitvec = "1"
 
-ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
-ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+ark-ff = "0.4" 
+ark-poly = "0.4"
 
 sum-check-protocol = { path = "../sum-check-protocol" }
 multilinear-extensions = { path = "../multilinear-extensions" }
@@ -18,7 +18,7 @@ multilinear-extensions = { path = "../multilinear-extensions" }
 pretty_assertions = "1"
 criterion = { version = "0.4", features = ["html_reports"] }
 
-ark-std = { git = "https://github.com/arkworks-rs/std" }
+ark-std = "0.4"
 
 [[bench]]
 name = "mm_benchmark"

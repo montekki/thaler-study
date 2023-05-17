@@ -170,8 +170,7 @@ mod tests {
         fn new<R: Rng>(n: usize, rng: &mut R) -> Self {
             Self(
                 (0..n)
-                    .into_iter()
-                    .map(|_| (0..n).into_iter().map(|_| F::rand(rng)).collect())
+                    .map(|_| (0..n).map(|_| F::rand(rng)).collect())
                     .collect(),
             )
         }
