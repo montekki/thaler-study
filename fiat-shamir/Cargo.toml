@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ark-serialize = { git = "https://github.com/arkworks-rs/algebra" }
-ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
-ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+ark-serialize = "0.4" 
+ark-ff = "0.4"
+ark-poly = "0.4" 
 
 sum-check-protocol = { path = "../sum-check-protocol" }
 
 thiserror = "1.0.31"
 
 [dev-dependencies]
-ark-std = { git = "https://github.com/arkworks-rs/std" }
+ark-std = "0.4"
 
 sha2 = "0.10.6"

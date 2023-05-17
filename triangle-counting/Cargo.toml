@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
-ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+ark-ff = "0.4" 
+ark-poly = "0.4" 
 sum-check-protocol = { path = "../sum-check-protocol" }
 
 [dev-dependencies]
-ark-std = { git = "https://github.com/arkworks-rs/std" }
+ark-std = "0.4"
 pretty_assertions = "1"

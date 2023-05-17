@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
-ark-poly = { git = "https://github.com/arkworks-rs/algebra" }
+ark-ff = "0.4"
+ark-poly = "0.4"
 
 [dev-dependencies]
 pretty_assertions = "1"
