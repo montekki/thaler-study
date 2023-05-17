@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["cti_multilinear_from_evaluations","Evaluate multilinear extension with an algorith from `VSBW13`"],["vsbw_multilinear_from_evaluations","Evaluate multilinear extension of with an algorithm from `CTY11`."]]};
+window.SIDEBAR_ITEMS = {"fn":["cti_multilinear_from_evaluations","vsbw_multilinear_from_evaluations"]};

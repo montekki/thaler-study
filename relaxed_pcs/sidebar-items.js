@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Error","Crate error type."]],"struct":[["Prover","Prover in the Relaxed PCS protocol."],["Verifier","The Verifier in the Relaxed PCS protocol."]],"trait":[["IF","Iterate over all possible values of a finite field."]],"type":[["Result","Crate `Result` type."]]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["Prover","Verifier"],"trait":["IF"],"type":["Result"]};
