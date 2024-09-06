@@ -1,0 +1,1 @@
+searchState.loadedDescShard("triangle_counting", 0, "A polynomial\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCreates a new $3 \\log n$-variate polynomial $g(X,Y,Z)$ from")
