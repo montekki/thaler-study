@@ -42,7 +42,7 @@ jobs:
           ls -l ./docs/
 
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         # published only from master AND if the triggerer is not dependabot
         # https://github.com/dependabot/dependabot-core/issues/3253#issuecomment-797125425
         #
