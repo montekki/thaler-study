@@ -80,7 +80,7 @@ mod tests {
             .map(|&f| Fr::from_bigint(f.into()).unwrap())
             .collect();
 
-        let expected_result = vec![
+        let expected_result = [
             vec![1, 2, 3, 4, 0],
             vec![1, 4, 2, 0, 3],
             vec![1, 1, 1, 1, 1],

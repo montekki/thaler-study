@@ -243,7 +243,7 @@ mod tests {
     #[test]
     fn example_from_book() {
         let rng = &mut test_rng();
-        let a = vec![
+        let a = [
             vec![
                 Fp5::from_bigint(0u32.into()).unwrap(),
                 Fp5::from_bigint(1u32.into()).unwrap(),
@@ -254,7 +254,7 @@ mod tests {
             ],
         ];
 
-        let b = vec![
+        let b = [
             vec![
                 Fp5::from_bigint(1u32.into()).unwrap(),
                 Fp5::from_bigint(0u32.into()).unwrap(),

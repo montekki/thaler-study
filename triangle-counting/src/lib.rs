@@ -233,7 +233,7 @@ mod tests {
 
         let rng = &mut test_rng();
 
-        let adj_matrix = vec![
+        let adj_matrix = [
             vec![false, true, true, false],
             vec![true, false, true, false],
             vec![true, true, false, false],
