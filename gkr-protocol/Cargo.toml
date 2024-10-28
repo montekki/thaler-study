@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ark-ff = "0.4"
+ark-ff = "0.5"
 ark-poly = "0.4"
 ark-std = "0.4"
 

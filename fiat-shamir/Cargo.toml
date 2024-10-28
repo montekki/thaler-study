@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 ark-serialize = "0.4" 
-ark-ff = "0.4"
+ark-ff = "0.5"
 ark-poly = "0.4" 
 
 sum-check-protocol = { path = "../sum-check-protocol" }

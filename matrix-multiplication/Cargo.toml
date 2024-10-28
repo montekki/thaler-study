@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 bitvec = "1"
 
-ark-ff = "0.4" 
+ark-ff = "0.5" 
 ark-poly = "0.4"
 
 sum-check-protocol = { path = "../sum-check-protocol" }
