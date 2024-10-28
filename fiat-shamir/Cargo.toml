@@ -13,6 +13,6 @@ sum-check-protocol = { path = "../sum-check-protocol" }
 thiserror = "1.0.31"
 
 [dev-dependencies]
-ark-std = "0.4"
+ark-std = "0.5"
 
 sha2 = "0.10.6"

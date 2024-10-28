@@ -7,7 +7,7 @@ edition = "2021"
 ark-crypto-primitives = { version = "0.4", features = ["merkle_tree"] }
 ark-ff = "0.4"
 ark-poly = "0.4"
-ark-std = "0.4"
+ark-std = "0.5"
 
 gkr-protocol = { path = "../gkr-protocol" }
 thiserror = "1.0.38"
