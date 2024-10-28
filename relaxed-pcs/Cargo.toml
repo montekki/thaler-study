@@ -13,5 +13,5 @@ gkr-protocol = { path = "../gkr-protocol" }
 thiserror = "1.0.38"
 
 [dev-dependencies]
-ark-ed-on-bls12-381 = "0.4"
+ark-ed-on-bls12-381 = "0.5"
 pretty_assertions = "1"
