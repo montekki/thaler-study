@@ -18,7 +18,7 @@ multilinear-extensions = { path = "../multilinear-extensions" }
 pretty_assertions = "1"
 criterion = { version = "0.5", features = ["html_reports"] }
 
-ark-std = "0.4"
+ark-std = "0.5"
 
 [[bench]]
 name = "mm_benchmark"
