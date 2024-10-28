@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 ark-ff = "0.4"
-ark-poly = "0.4"
+ark-poly = "0.5"
 
 [dev-dependencies]
 pretty_assertions = "1"

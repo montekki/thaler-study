@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 ark-crypto-primitives = { version = "0.4", features = ["merkle_tree"] }
 ark-ff = "0.4"
-ark-poly = "0.4"
+ark-poly = "0.5"
 ark-std = "0.4"
 
 gkr-protocol = { path = "../gkr-protocol" }
