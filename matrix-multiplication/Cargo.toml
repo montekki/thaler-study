@@ -9,7 +9,7 @@ edition = "2021"
 bitvec = "1"
 
 ark-ff = "0.4" 
-ark-poly = "0.4"
+ark-poly = "0.5"
 
 sum-check-protocol = { path = "../sum-check-protocol" }
 multilinear-extensions = { path = "../multilinear-extensions" }
