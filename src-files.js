@@ -1,10 +1,3 @@
-var srcIndex = new Map(JSON.parse('[\
-["fiat_shamir",["",[],["lib.rs"]]],\
-["gkr_protocol",["",[],["circuit.rs","lib.rs","round_polynomial.rs"]]],\
-["matrix_multiplication",["",[],["lib.rs"]]],\
-["multilinear_extensions",["",[],["lib.rs"]]],\
-["relaxed_pcs",["",[],["lib.rs","permutations.rs"]]],\
-["sum_check_protocol",["",[],["lib.rs"]]],\
-["triangle_counting",["",[],["lib.rs"]]]\
-]'));
+var srcIndex = new Map(JSON.parse('[["fiat_shamir",["",[],["lib.rs"]]],["gkr_protocol",["",[],["circuit.rs","lib.rs","round_polynomial.rs"]]],["matrix_multiplication",["",[],["lib.rs"]]],["multilinear_extensions",["",[],["lib.rs"]]],["relaxed_pcs",["",[],["lib.rs","permutations.rs"]]],["sum_check_protocol",["",[],["lib.rs"]]],["triangle_counting",["",[],["lib.rs"]]]]'));
 createSrcSidebar();
+//{"start":36,"fragment_lengths":[34,71,45,46,53,42,41]}
