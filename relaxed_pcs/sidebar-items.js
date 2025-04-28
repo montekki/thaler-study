@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["Prover","Verifier"],"trait":["IF"],"type":["Result"]};
