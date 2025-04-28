@@ -3,22 +3,18 @@ name = "matrix-multiplication"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-bitvec = "1"
-
-ark-ff = "0.4" 
-ark-poly = "0.4"
+bitvec.workspace = true
+ark-ff.workspace = true
+ark-poly.workspace = true
 
 sum-check-protocol = { path = "../sum-check-protocol" }
 multilinear-extensions = { path = "../multilinear-extensions" }
 
 [dev-dependencies]
-pretty_assertions = "1"
-criterion = { version = "0.5", features = ["html_reports"] }
-
-ark-std = "0.4"
+ark-std.workspace = true
+criterion = { workspace = true, features = ["html_reports"] }
+pretty_assertions.workspace = true
 
 [[bench]]
 name = "mm_benchmark"

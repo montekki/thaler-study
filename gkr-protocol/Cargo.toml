@@ -4,13 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ark-ff = "0.4"
-ark-poly = "0.4"
-ark-std = "0.4"
-
+ark-ff.workspace = true
+ark-poly.workspace = true
+ark-std.workspace = true
+thiserror.workspace = true
 sum-check-protocol = { path = "../sum-check-protocol" }
 
-thiserror = "1.0.31"
-
 [dev-dependencies]
-pretty_assertions = "1"
+pretty_assertions.workspace = true

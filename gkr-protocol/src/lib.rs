@@ -152,8 +152,7 @@ impl<F: FftField> Verifier<F> {
             let q_0 = q.evaluate(&F::zero());
             let q_1 = q.evaluate(&F::one());
 
-            let eval =
-                add_i.evaluate(bc).unwrap() * (q_0 + q_1) + mul_i.evaluate(bc).unwrap() * q_0 * q_1;
+            let eval = add_i.evaluate(bc) * (q_0 + q_1) + mul_i.evaluate(bc) * q_0 * q_1;
 
             assert_eq!(eval, p.evaluate(bc.last().unwrap()));
 
@@ -197,7 +196,7 @@ impl<F: FftField> Verifier<F> {
 
                 let r_zero: Vec<_> = (0..num_output_vars).map(|_| F::rand(rng)).collect();
 
-                let m_zero = d.evaluate(&r_zero).unwrap();
+                let m_zero = d.evaluate(&r_zero);
 
                 self.r = vec![r_zero.clone()];
                 self.m = vec![m_zero];
@@ -214,7 +213,7 @@ impl<F: FftField> Verifier<F> {
             input,
         );
 
-        &w.evaluate(self.r.last().unwrap()).unwrap() == self.m.last().unwrap()
+        &w.evaluate(self.r.last().unwrap()) == self.m.last().unwrap()
     }
 }
 
