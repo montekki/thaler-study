@@ -85,7 +85,7 @@ pub fn generate_transcript<F: Field, P: InteractiveProver<F>, H: HashToField<F>>
     let mut g = vec![g_1];
 
     for j in 1..prover.num_rounds() {
-        let r_j = hasher.hash_to_field(&hash_input, 1)[0];
+        let r_j = hasher.hash_to_field::<1>(&hash_input)[0];
 
         let g_j = prover.round(j, r_j)?;
 
@@ -132,7 +132,7 @@ pub fn verify_transcript<F: Field, V: InteractiveVerifier<F, RandNums<F>>, H: Ha
 
     for j in 0..transcript.g.len() {
         hash_input.extend_from_slice(&transcript.g[j]);
-        let r_j = hasher.hash_to_field(&hash_input, 1)[0];
+        let r_j = hasher.hash_to_field::<1>(&hash_input)[0];
 
         if !verifier.round(j, &transcript.g[j], &mut RandNums::new(vec![r_j]))? {
             return Ok(false);

@@ -6,7 +6,7 @@ use std::cmp;
 use ark_ff::{FftField, Field};
 use ark_poly::{
     univariate, DenseMultilinearExtension, EvaluationDomain, Evaluations, GeneralEvaluationDomain,
-    MultilinearExtension,
+    MultilinearExtension, Polynomial,
 };
 use sum_check_protocol::SumCheckPolynomial;
 
@@ -50,11 +50,11 @@ impl<F: FftField> SumCheckPolynomial<F> for W<F> {
             let this = &self.w_b;
             this.num_vars
         });
-        let add_e = self.add_i.evaluate(point)?;
-        let mul_e = self.mul_i.evaluate(point)?;
+        let add_e = self.add_i.evaluate(&point.into());
+        let mul_e = self.mul_i.evaluate(&point.into());
 
-        let w_b = self.w_b.evaluate(b)?;
-        let w_c = self.w_c.evaluate(c)?;
+        let w_b = self.w_b.evaluate(&b.into());
+        let w_c = self.w_c.evaluate(&c.into());
 
         Some(add_e * (w_b + w_c) + mul_e * (w_b * w_c))
     }

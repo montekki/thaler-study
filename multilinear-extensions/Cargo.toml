@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ark-ff = "0.4"
-ark-poly = "0.4"
+ark-ff.workspace = true
+ark-poly.workspace = true
 
 [dev-dependencies]
-pretty_assertions = "1"
+pretty_assertions.workspace = true

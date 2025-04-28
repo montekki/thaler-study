@@ -3,13 +3,11 @@ name = "triangle-counting"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-ark-ff = "0.4" 
-ark-poly = "0.4" 
+ark-ff.workspace = true
+ark-poly.workspace = true
 sum-check-protocol = { path = "../sum-check-protocol" }
 
 [dev-dependencies]
-ark-std = "0.4"
-pretty_assertions = "1"
+ark-std.workspace = true
+pretty_assertions.workspace = true

@@ -3,7 +3,7 @@ use std::cmp;
 use ark_ff::{FftField, Field};
 use ark_poly::{
     univariate::SparsePolynomial, DenseMultilinearExtension, EvaluationDomain, Evaluations,
-    GeneralEvaluationDomain, MultilinearExtension,
+    GeneralEvaluationDomain, MultilinearExtension, Polynomial,
 };
 use sum_check_protocol::SumCheckPolynomial;
 
@@ -74,14 +74,14 @@ impl<F: FftField> SumCheckPolynomial<F> for G<F> {
             .unwrap_or(&[]);
 
         let y_z_point = point.get(self.x_vars_num()..).unwrap_or(&[]);
-        let f_x_y_evaluation = self.f_a_1.evaluate(x_y_point)?;
-        let f_y_z_evaluation = self.f_a_2.evaluate(y_z_point)?;
+        let f_x_y_evaluation = self.f_a_1.evaluate(&x_y_point.into());
+        let f_y_z_evaluation = self.f_a_2.evaluate(&y_z_point.into());
 
         let mut x_z = point.get(..self.x_vars_num()).unwrap_or(&[]).to_owned();
 
         x_z.extend_from_slice(&point[self.x_vars_num() + self.y_vars_num()..]);
 
-        let f_x_z_evaluation = self.f_a_3.evaluate(&x_z)?;
+        let f_x_z_evaluation = self.f_a_3.evaluate(&x_z);
 
         Some(f_x_y_evaluation * f_x_z_evaluation * f_y_z_evaluation)
     }

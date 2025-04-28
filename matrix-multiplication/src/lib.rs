@@ -1,5 +1,7 @@
 use ark_ff::{FftField, Field};
-use ark_poly::{univariate::SparsePolynomial, DenseMultilinearExtension, MultilinearExtension};
+use ark_poly::{
+    univariate::SparsePolynomial, DenseMultilinearExtension, MultilinearExtension, Polynomial,
+};
 use sum_check_protocol::SumCheckPolynomial;
 
 /// A polynomial of form
@@ -92,8 +94,8 @@ impl<F: Field> G<F> {
 
 impl<F: FftField> SumCheckPolynomial<F> for G<F> {
     fn evaluate(&self, point: &[F]) -> Option<F> {
-        let f_a = self.f_a.evaluate(point)?;
-        let f_b = self.f_b.evaluate(point)?;
+        let f_a = self.f_a.evaluate(&point.into());
+        let f_b = self.f_b.evaluate(&point.into());
 
         Some(f_a * f_b)
     }

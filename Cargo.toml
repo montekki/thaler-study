@@ -7,7 +7,21 @@ members = [
     "fiat-shamir",
     "matrix-multiplication",
     "multilinear-extensions",
-    "relaxed-pcs",
+	# TODO: figure out merkle tree
+    # "relaxed-pcs",
     "triangle-counting",
     "sum-check-protocol",
 ]
+
+[workspace.dependencies]
+ark-ed-on-bls12-381 = "0.5"
+ark-crypto-primitives = "0.5"
+ark-serialize = "0.5" 
+ark-ff = "0.5"
+ark-poly = "0.5"
+ark-std = "0.5" 
+bitvec = "1.0.0"
+pretty_assertions = "1"
+sha2 = "0.10.6"
+criterion = "0.5"
+thiserror = "1.0.31"

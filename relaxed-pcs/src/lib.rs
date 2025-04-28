@@ -156,7 +156,7 @@ pub struct Prover<F: Field, M: MultilinearExtension<F>, P: Config<Leaf = F>> {
     values: Vec<F>,
 }
 
-impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = F>> Prover<F, M, P> {
+impl<F: IF + AsRef<P::Leaf>, M: MultilinearExtension<F>, P: Config<Leaf = F>> Prover<F, M, P> {
     /// Create a new Prover.
     pub fn new(
         poly: M,
@@ -164,12 +164,10 @@ impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = F>> Prover<F, M, P> {
         two_to_one_params: <<P as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
     ) -> Result<Self> {
         let all_values = F::all_multidimentional_values(poly.num_vars());
-        let all_poly_values: Result<Vec<_>> = all_values
+        let all_poly_values: Vec<_> = all_values
             .iter()
-            .map(|value| poly.evaluate(value).ok_or(Error::PolyEvalDimMismatch))
+            .map(|value| poly.evaluate(value))
             .collect();
-
-        let all_poly_values = all_poly_values?;
 
         let all_values_len = all_poly_values.len();
         let values: Vec<_> = all_poly_values
@@ -264,7 +262,7 @@ mod tests {
             parameters: &Self::Parameters,
             input: T,
         ) -> std::result::Result<Self::Output, ark_crypto_primitives::Error> {
-            let bytes = to_uncompressed_bytes!(input).map_err(|_| Box::new(Error::ToBytesError))?;
+            let bytes = to_uncompressed_bytes!(input)?;
             LeafH::evaluate(parameters, bytes.as_ref())
         }
     }
@@ -300,6 +298,14 @@ mod tests {
         }
     }
 
+    struct FpM(ark_ff::Fp<MontBackend<FrConfig, 1>, 1>);
+
+    impl AsRef<FpM> for FpM {
+        fn as_ref(&self) -> &FpM {
+            todo!()
+        }
+    }
+
     #[test]
     fn it_works() {
         let v = Fp5::all_values();
@@ -312,11 +318,8 @@ mod tests {
 
         let leaf_chr_params = <LeafH as CRHScheme>::setup(rng).unwrap();
         let two_to_one_params = <CompressH as TwoToOneCRHScheme>::setup(rng).unwrap();
-        let prover: Prover<
-            Fp5,
-            DenseMultilinearExtension<ark_ff::Fp<MontBackend<FrConfig, 1>, 1>>,
-            JubJubMerkleTreeParamsFp5,
-        > = Prover::new(poly, leaf_chr_params.clone(), two_to_one_params.clone()).unwrap();
+        let prover: Prover<Fp5, DenseMultilinearExtension<FpM>, JubJubMerkleTreeParamsFp5> =
+            Prover::new(poly, leaf_chr_params.clone(), two_to_one_params.clone()).unwrap();
 
         let root = prover.merkle_root();
 
