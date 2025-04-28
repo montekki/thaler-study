@@ -85,8 +85,8 @@ jobs:
 
       - name: Install OpenSSL 1.1 compatibility
         run: |
-          wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl1.1/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
-          sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+          wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb
+          sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
