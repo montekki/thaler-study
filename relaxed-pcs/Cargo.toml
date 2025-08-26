@@ -13,4 +13,3 @@ gkr-protocol = { path = "../gkr-protocol" }
 
 [dev-dependencies]
 ark-ed-on-bls12-381.workspace = true
-pretty_assertions.workspace = true

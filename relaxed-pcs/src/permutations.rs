@@ -7,7 +7,7 @@ pub(crate) struct PermutationIterator<'a, T: 'a> {
     prev: Option<Vec<usize>>,
 }
 
-pub(crate) fn permutations<T>(universe: &[T], size: usize) -> PermutationIterator<T> {
+pub(crate) fn permutations<T>(universe: &[T], size: usize) -> PermutationIterator<'_, T> {
     PermutationIterator {
         universe,
         size,
