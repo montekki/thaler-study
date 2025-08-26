@@ -156,8 +156,8 @@ pub struct Prover<F: Field, M: MultilinearExtension<F>, P: Config<Leaf = F>> {
     values: Vec<F>,
 }
 
-impl<F, M, P> Prover<F, M, P> 
-where 
+impl<F, M, P> Prover<F, M, P>
+where
     F: IF + AsRef<P::Leaf>,
     M: MultilinearExtension<F>,
     P: Config<Leaf = F>,
@@ -224,9 +224,9 @@ mod tests {
 
     use super::*;
 
+    use ark_ff::AdditiveGroup;
     use ark_poly::DenseMultilinearExtension;
     use ark_std::test_rng;
-    use ark_ff::AdditiveGroup;
 
     use ark_crypto_primitives::{
         crh::{pedersen, CRHScheme, TwoToOneCRHScheme},
@@ -295,8 +295,6 @@ mod tests {
 
     type Fp5 = Fp64<MontBackend<FrConfig, 1>>;
 
-
-
     // Create a version of Prover that doesn't require AsRef for testing
     fn create_test_prover<M>(
         poly: M,
@@ -338,7 +336,8 @@ mod tests {
         poly: M,
         values_convenience_map: HashMap<Vec<Fp5>, usize>,
         values: Vec<Fp5>,
-        two_to_one_params: <<JubJubMerkleTreeParamsFp5 as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
+        two_to_one_params:
+            <<JubJubMerkleTreeParamsFp5 as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
     }
 
     impl<M: MultilinearExtension<Fp5>> TestProver<M> {
@@ -346,10 +345,19 @@ mod tests {
             // Return a dummy root for testing - use proper parameters
             let empty_left = vec![0u8; 32];
             let empty_right = vec![0u8; 32];
-            <CompressH as TwoToOneCRHScheme>::evaluate(&self.two_to_one_params, empty_left, empty_right).unwrap()
+            <CompressH as TwoToOneCRHScheme>::evaluate(
+                &self.two_to_one_params,
+                empty_left,
+                empty_right,
+            )
+            .unwrap()
         }
 
-        fn poly_restriction_to_line(&self, b: &[Fp5], c: &[Fp5]) -> univariate::SparsePolynomial<Fp5> {
+        fn poly_restriction_to_line(
+            &self,
+            b: &[Fp5],
+            c: &[Fp5],
+        ) -> univariate::SparsePolynomial<Fp5> {
             restrict_poly(b, c, &self.poly)
         }
 
@@ -394,14 +402,20 @@ mod tests {
 
         let leaf_chr_params = <LeafH as CRHScheme>::setup(rng).unwrap();
         let two_to_one_params = <CompressH as TwoToOneCRHScheme>::setup(rng).unwrap();
-        
+
         // Use test prover that works around AsRef issue
-        let prover = create_test_prover(poly, leaf_chr_params.clone(), two_to_one_params.clone()).unwrap();
+        let prover =
+            create_test_prover(poly, leaf_chr_params.clone(), two_to_one_params.clone()).unwrap();
 
         let root = prover.merkle_root();
 
-        let mut verifier: Verifier<Fp5, JubJubMerkleTreeParamsFp5> =
-            Verifier::new(num_vars, degree, root, leaf_chr_params.clone(), two_to_one_params.clone());
+        let mut verifier: Verifier<Fp5, JubJubMerkleTreeParamsFp5> = Verifier::new(
+            num_vars,
+            degree,
+            root,
+            leaf_chr_params.clone(),
+            two_to_one_params.clone(),
+        );
 
         let rand_line = verifier.random_line(rng);
 
@@ -412,6 +426,8 @@ mod tests {
 
         verifier.commited_univariate(restriction).unwrap();
 
-        proof.verify(&leaf_chr_params, &two_to_one_params, &root, value).unwrap();
+        proof
+            .verify(&leaf_chr_params, &two_to_one_params, &root, value)
+            .unwrap();
     }
 }
