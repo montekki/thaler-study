@@ -7,8 +7,7 @@ members = [
     "fiat-shamir",
     "matrix-multiplication",
     "multilinear-extensions",
-	# TODO: figure out merkle tree
-    # "relaxed-pcs",
+    "relaxed-pcs",
     "triangle-counting",
     "sum-check-protocol",
 ]
