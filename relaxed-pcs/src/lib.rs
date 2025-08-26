@@ -156,12 +156,7 @@ pub struct Prover<F: Field, M: MultilinearExtension<F>, P: Config<Leaf = F>> {
     values: Vec<F>,
 }
 
-impl<F, M, P> Prover<F, M, P>
-where
-    F: IF + AsRef<P::Leaf>,
-    M: MultilinearExtension<F>,
-    P: Config<Leaf = F>,
-{
+impl<F: IF + AsRef<P::Leaf>, M: MultilinearExtension<F>, P: Config<Leaf = F>> Prover<F, M, P> {
     /// Create a new Prover.
     pub fn new(
         poly: M,
@@ -218,15 +213,60 @@ where
     }
 }
 
+// Add a test-specific implementation that bypasses the AsRef constraint
+// This preserves all the real functionality while working around arkworks 0.5 AsRef requirements
+impl<F: IF, M: MultilinearExtension<F>, P: Config<Leaf = F>> Prover<F, M, P>
+where
+    <P as Config>::LeafHash: CRHScheme<Input = F>,
+{
+    /// Create a new Prover for testing without AsRef constraint.
+    /// This uses the real Prover struct and all its methods, just bypassing the AsRef constraint.
+    pub fn new_for_test(
+        poly: M,
+        leaf_chr_params: <<P as Config>::LeafHash as CRHScheme>::Parameters,
+        two_to_one_params: <<P as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
+    ) -> Result<Self> {
+        let all_values = F::all_multidimentional_values(poly.num_vars());
+        let all_poly_values: Vec<_> = all_values
+            .iter()
+            .map(|value| poly.evaluate(value))
+            .collect();
+
+        let all_values_len = all_poly_values.len();
+        let values: Vec<_> = all_poly_values
+            .iter()
+            .cloned()
+            .chain((all_values_len..all_values_len.next_power_of_two()).map(|_| F::zero()))
+            .collect();
+
+        let values_convenience_map = all_values
+            .iter()
+            .enumerate()
+            .map(|(i, value)| (value.clone(), i))
+            .collect();
+
+        // Use the hash function that expects F as input directly
+        let tree: MerkleTree<P> =
+            MerkleTree::new(&leaf_chr_params, &two_to_one_params, values.iter())?;
+
+        Ok(Self {
+            tree,
+            poly,
+            values_convenience_map,
+            values,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::{borrow::Borrow, marker::PhantomData};
 
     use super::*;
 
-    use ark_ff::AdditiveGroup;
     use ark_poly::DenseMultilinearExtension;
     use ark_std::test_rng;
+    // Remove pretty_assertions dependency
 
     use ark_crypto_primitives::{
         crh::{pedersen, CRHScheme, TwoToOneCRHScheme},
@@ -295,93 +335,6 @@ mod tests {
 
     type Fp5 = Fp64<MontBackend<FrConfig, 1>>;
 
-    // Create a version of Prover that doesn't require AsRef for testing
-    fn create_test_prover<M>(
-        poly: M,
-        _leaf_chr_params: <<JubJubMerkleTreeParamsFp5 as Config>::LeafHash as CRHScheme>::Parameters,
-        two_to_one_params: <<JubJubMerkleTreeParamsFp5 as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
-    ) -> Result<TestProver<M>>
-    where
-        M: MultilinearExtension<Fp5>,
-    {
-        let all_values = Fp5::all_multidimentional_values(poly.num_vars());
-        let all_poly_values: Vec<_> = all_values
-            .iter()
-            .map(|value| poly.evaluate(value))
-            .collect();
-
-        let all_values_len = all_poly_values.len();
-        let values: Vec<_> = all_poly_values
-            .iter()
-            .cloned()
-            .chain((all_values_len..all_values_len.next_power_of_two()).map(|_| Fp5::ZERO))
-            .collect();
-
-        let values_convenience_map = all_values
-            .iter()
-            .enumerate()
-            .map(|(i, value)| (value.clone(), i))
-            .collect();
-
-        // For testing, create a simple mock tree instead of using MerkleTree
-        Ok(TestProver {
-            poly,
-            values_convenience_map,
-            values,
-            two_to_one_params,
-        })
-    }
-
-    struct TestProver<M> {
-        poly: M,
-        values_convenience_map: HashMap<Vec<Fp5>, usize>,
-        values: Vec<Fp5>,
-        two_to_one_params:
-            <<JubJubMerkleTreeParamsFp5 as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
-    }
-
-    impl<M: MultilinearExtension<Fp5>> TestProver<M> {
-        fn merkle_root(&self) -> <JubJubMerkleTreeParamsFp5 as Config>::InnerDigest {
-            // Return a dummy root for testing - use proper parameters
-            let empty_left = vec![0u8; 32];
-            let empty_right = vec![0u8; 32];
-            <CompressH as TwoToOneCRHScheme>::evaluate(
-                &self.two_to_one_params,
-                empty_left,
-                empty_right,
-            )
-            .unwrap()
-        }
-
-        fn poly_restriction_to_line(
-            &self,
-            b: &[Fp5],
-            c: &[Fp5],
-        ) -> univariate::SparsePolynomial<Fp5> {
-            restrict_poly(b, c, &self.poly)
-        }
-
-        fn challenge(&self, point: Vec<Fp5>) -> Result<(MockPath, Fp5)> {
-            let point_index = self.values_convenience_map.get(&point).unwrap();
-            Ok((MockPath, self.values[*point_index]))
-        }
-    }
-
-    struct MockPath;
-
-    impl MockPath {
-        fn verify(
-            &self,
-            _leaf_chr_params: &<<JubJubMerkleTreeParamsFp5 as Config>::LeafHash as CRHScheme>::Parameters,
-            _two_to_one_params: &<<JubJubMerkleTreeParamsFp5 as Config>::TwoToOneHash as TwoToOneCRHScheme>::Parameters,
-            _root: &<JubJubMerkleTreeParamsFp5 as Config>::InnerDigest,
-            _leaf: Fp5,
-        ) -> Result<()> {
-            // Always succeed for testing
-            Ok(())
-        }
-    }
-
     impl IF for Fp5 {
         type Values = Vec<Self>;
 
@@ -402,20 +355,16 @@ mod tests {
 
         let leaf_chr_params = <LeafH as CRHScheme>::setup(rng).unwrap();
         let two_to_one_params = <CompressH as TwoToOneCRHScheme>::setup(rng).unwrap();
-
-        // Use test prover that works around AsRef issue
-        let prover =
-            create_test_prover(poly, leaf_chr_params.clone(), two_to_one_params.clone()).unwrap();
+        
+        // Use the REAL Prover with test-specific constructor that bypasses AsRef constraint
+        // This tests all the actual protocol logic including polynomial evaluation, Merkle tree operations, and proofs
+        let prover: Prover<Fp5, DenseMultilinearExtension<Fp5>, JubJubMerkleTreeParamsFp5> =
+            Prover::new_for_test(poly, leaf_chr_params.clone(), two_to_one_params.clone()).unwrap();
 
         let root = prover.merkle_root();
 
-        let mut verifier: Verifier<Fp5, JubJubMerkleTreeParamsFp5> = Verifier::new(
-            num_vars,
-            degree,
-            root,
-            leaf_chr_params.clone(),
-            two_to_one_params.clone(),
-        );
+        let mut verifier: Verifier<Fp5, JubJubMerkleTreeParamsFp5> =
+            Verifier::new(num_vars, degree, root, leaf_chr_params, two_to_one_params);
 
         let rand_line = verifier.random_line(rng);
 
@@ -426,8 +375,6 @@ mod tests {
 
         verifier.commited_univariate(restriction).unwrap();
 
-        proof
-            .verify(&leaf_chr_params, &two_to_one_params, &root, value)
-            .unwrap();
+        verifier.verify_prover_reply(proof, value).unwrap();
     }
 }
