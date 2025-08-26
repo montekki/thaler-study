@@ -37,7 +37,7 @@ where
 
         match self.prev {
             None => {
-                let zeroes: Vec<usize> = std::iter::repeat(0).take(self.size).collect();
+                let zeroes: Vec<usize> = std::iter::repeat_n(0, self.size).collect();
                 let result = Some(map(self.universe, &zeroes[..]));
                 self.prev = Some(zeroes);
                 result
