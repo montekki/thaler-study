@@ -46,10 +46,7 @@ impl<F: Field> W<F> {
 
 impl<F: FftField> SumCheckPolynomial<F> for W<F> {
     fn evaluate(&self, point: &[F]) -> Option<F> {
-        let (b, c) = point.split_at({
-            let this = &self.w_b;
-            this.num_vars
-        });
+        let (b, c) = point.split_at(self.w_b.num_vars());
         let add_e = self.add_i.evaluate(&point.into());
         let mul_e = self.mul_i.evaluate(&point.into());
 

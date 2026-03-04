@@ -61,10 +61,7 @@ impl<F: Field> Iterator for BooleanHypercube<F> {
             Some(
                 s.iter()
                     .take(self.n as usize)
-                    .map(|f| match *f {
-                        false => F::zero(),
-                        true => F::one(),
-                    })
+                    .map(|f| if *f { F::one() } else { F::zero() })
                     .collect(),
             )
         }

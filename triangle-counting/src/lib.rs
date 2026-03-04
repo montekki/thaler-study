@@ -285,7 +285,7 @@ mod tests {
             let triangle_count = test_matrix.triangle_count();
 
             let g: G<Fp389> = G::new_adj_matrix(
-                (f64::from(n as u32).log2() as usize) * 2,
+                (n as u32).ilog2() as usize * 2,
                 test_matrix.0.iter().flatten().copied(),
             );
 

@@ -55,10 +55,7 @@ fn u32_to_boolean_vec<F: Field>(v: u32, bits: usize) -> Vec<F> {
     bitslice
         .iter()
         .take(bits)
-        .map(|bit| match *bit {
-            true => F::one(),
-            false => F::zero(),
-        })
+        .map(|bit| if *bit { F::one() } else { F::zero() })
         .collect()
 }
 

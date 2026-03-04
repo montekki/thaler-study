@@ -151,23 +151,18 @@ impl Circuit {
 
     pub fn add_i_ext<F: Field>(&self, r_i: &[F], i: usize) -> DenseMultilinearExtension<F> {
         let mut add_i = vec![];
-        let num_vars_current = f64::from(self.layers[i].len() as u32).log2() as usize;
+        let num_vars_current = (self.layers[i].len() as u32).ilog2() as usize;
 
-        let num_vars_next = f64::from(
-            self.layers
-                .get(i + 1)
-                .map(|c| c.len())
-                .unwrap_or(self.num_inputs) as u32,
-        )
-        .log2() as usize;
+        let num_vars_next = (self.layers
+            .get(i + 1)
+            .map(|c| c.len())
+            .unwrap_or(self.num_inputs) as u32)
+            .ilog2() as usize;
 
         for c in 0..2usize.pow(num_vars_next as u32) {
             for b in 0..2usize.pow(num_vars_next as u32) {
                 for a in 0..2usize.pow(num_vars_current as u32) {
-                    add_i.push(match self.add_i(i, a, b, c) {
-                        true => F::one(),
-                        false => F::zero(),
-                    });
+                    add_i.push(if self.add_i(i, a, b, c) { F::one() } else { F::zero() });
                 }
             }
         }
@@ -182,23 +177,18 @@ impl Circuit {
 
     pub fn mul_i_ext<F: Field>(&self, r_i: &[F], i: usize) -> DenseMultilinearExtension<F> {
         let mut mul_i = vec![];
-        let num_vars_current = f64::from(self.layers[i].len() as u32).log2() as usize;
+        let num_vars_current = (self.layers[i].len() as u32).ilog2() as usize;
 
-        let num_vars_next = f64::from(
-            self.layers
-                .get(i + 1)
-                .map(|c| c.len())
-                .unwrap_or(self.num_inputs) as u32,
-        )
-        .log2() as usize;
+        let num_vars_next = (self.layers
+            .get(i + 1)
+            .map(|c| c.len())
+            .unwrap_or(self.num_inputs) as u32)
+            .ilog2() as usize;
 
         for c in 0..2usize.pow(num_vars_next as u32) {
             for b in 0..2usize.pow(num_vars_next as u32) {
                 for a in 0..2usize.pow(num_vars_current as u32) {
-                    mul_i.push(match self.mul_i(i, a, b, c) {
-                        true => F::one(),
-                        false => F::zero(),
-                    });
+                    mul_i.push(if self.mul_i(i, a, b, c) { F::one() } else { F::zero() });
                 }
             }
         }
@@ -275,8 +265,8 @@ mod tests {
             for b in 0..4 {
                 for c in 0..4 {
                     let expected = ((a == 0 || a == 1) && a == b && a == c)
-                        || a == 2 && b == 1 && c == 2
-                        || a == b && b == c && a == 3;
+                        || (a == 2 && b == 1 && c == 2)
+                        || (a == b && b == c && a == 3);
                     assert_eq!(circuit.mul_i(1, a, b, c), expected, "{a} {b} {c}");
                 }
             }
