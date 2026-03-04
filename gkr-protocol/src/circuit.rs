@@ -153,7 +153,8 @@ impl Circuit {
         let mut add_i = vec![];
         let num_vars_current = (self.layers[i].len() as u32).ilog2() as usize;
 
-        let num_vars_next = (self.layers
+        let num_vars_next = (self
+            .layers
             .get(i + 1)
             .map(|c| c.len())
             .unwrap_or(self.num_inputs) as u32)
@@ -162,7 +163,11 @@ impl Circuit {
         for c in 0..2usize.pow(num_vars_next as u32) {
             for b in 0..2usize.pow(num_vars_next as u32) {
                 for a in 0..2usize.pow(num_vars_current as u32) {
-                    add_i.push(if self.add_i(i, a, b, c) { F::one() } else { F::zero() });
+                    add_i.push(if self.add_i(i, a, b, c) {
+                        F::one()
+                    } else {
+                        F::zero()
+                    });
                 }
             }
         }
@@ -179,7 +184,8 @@ impl Circuit {
         let mut mul_i = vec![];
         let num_vars_current = (self.layers[i].len() as u32).ilog2() as usize;
 
-        let num_vars_next = (self.layers
+        let num_vars_next = (self
+            .layers
             .get(i + 1)
             .map(|c| c.len())
             .unwrap_or(self.num_inputs) as u32)
@@ -188,7 +194,11 @@ impl Circuit {
         for c in 0..2usize.pow(num_vars_next as u32) {
             for b in 0..2usize.pow(num_vars_next as u32) {
                 for a in 0..2usize.pow(num_vars_current as u32) {
-                    mul_i.push(if self.mul_i(i, a, b, c) { F::one() } else { F::zero() });
+                    mul_i.push(if self.mul_i(i, a, b, c) {
+                        F::one()
+                    } else {
+                        F::zero()
+                    });
                 }
             }
         }

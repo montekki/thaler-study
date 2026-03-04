@@ -388,9 +388,17 @@ impl<F: FftField> Prover<F> {
         for c in 0..2usize.pow(num_vars_next as u32) {
             for b in 0..2usize.pow(num_vars_next as u32) {
                 for a in 0..2usize.pow(num_vars_current as u32) {
-                    add_i.push(if self.circuit.add_i(i, a, b, c) { F::one() } else { F::zero() });
+                    add_i.push(if self.circuit.add_i(i, a, b, c) {
+                        F::one()
+                    } else {
+                        F::zero()
+                    });
 
-                    mult_i.push(if self.circuit.mul_i(i, a, b, c) { F::one() } else { F::zero() });
+                    mult_i.push(if self.circuit.mul_i(i, a, b, c) {
+                        F::one()
+                    } else {
+                        F::zero()
+                    });
                 }
             }
         }
