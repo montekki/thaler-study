@@ -190,14 +190,13 @@ mod tests {
                 res.push(vec![false; n]);
             }
 
+            #[allow(clippy::needless_range_loop)]
             for i in 0..n {
-                for j in 0..n {
-                    if i != j {
-                        let are_connected = rng.gen();
+                for j in (i + 1)..n {
+                    let are_connected = rng.gen();
 
-                        res[i][j] = are_connected;
-                        res[j][i] = are_connected;
-                    }
+                    res[i][j] = are_connected;
+                    res[j][i] = are_connected;
                 }
             }
 
