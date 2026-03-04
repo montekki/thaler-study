@@ -308,10 +308,7 @@ mod tests {
         bitslice
             .iter()
             .take(bits)
-            .map(|bit| match *bit {
-                true => F::one(),
-                false => F::zero(),
-            })
+            .map(|bit| if *bit { F::one() } else { F::zero() })
             .collect()
     }
 
