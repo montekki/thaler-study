@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["matrix_multiplication",[["impl&lt;F: FftField&gt; <a class=\"trait\" href=\"sum_check_protocol/trait.SumCheckPolynomial.html\" title=\"trait sum_check_protocol::SumCheckPolynomial\">SumCheckPolynomial</a>&lt;F&gt; for <a class=\"struct\" href=\"matrix_multiplication/struct.G.html\" title=\"struct matrix_multiplication::G\">G</a>&lt;F&gt;"]]],["sum_check_protocol",[]],["triangle_counting",[["impl&lt;F: FftField&gt; <a class=\"trait\" href=\"sum_check_protocol/trait.SumCheckPolynomial.html\" title=\"trait sum_check_protocol::SumCheckPolynomial\">SumCheckPolynomial</a>&lt;F&gt; for <a class=\"struct\" href=\"triangle_counting/struct.G.html\" title=\"struct triangle_counting::G\">G</a>&lt;F&gt;"]]]]);
+    const implementors = Object.fromEntries([["matrix_multiplication",[["impl&lt;F: FftField&gt; <a class=\"trait\" href=\"sum_check_protocol/trait.SumCheckPolynomial.html\" title=\"trait sum_check_protocol::SumCheckPolynomial\">SumCheckPolynomial</a>&lt;F&gt; for <a class=\"struct\" href=\"matrix_multiplication/struct.G.html\" title=\"struct matrix_multiplication::G\">G</a>&lt;F&gt;",0]]],["sum_check_protocol",[]],["triangle_counting",[["impl&lt;F: FftField&gt; <a class=\"trait\" href=\"sum_check_protocol/trait.SumCheckPolynomial.html\" title=\"trait sum_check_protocol::SumCheckPolynomial\">SumCheckPolynomial</a>&lt;F&gt; for <a class=\"struct\" href=\"triangle_counting/struct.G.html\" title=\"struct triangle_counting::G\">G</a>&lt;F&gt;",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[345,26,334]}
+//{"start":59,"fragment_lengths":[347,26,336]}
