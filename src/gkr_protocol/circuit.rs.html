@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `gkr-protocol/src/circuit.rs`."><title>circuit.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="gkr_protocol" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0 (1159e78c4 2025-09-14)" data-channel="1.90.0" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gkr_protocol/</div>circuit.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::ops::{Add, Mul};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `gkr-protocol/src/circuit.rs`."><title>circuit.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="gkr_protocol" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gkr_protocol/</div>circuit.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::ops::{Add, Mul};
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>ark_ff::Field;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>ark_poly::{DenseMultilinearExtension, MultilinearExtension};
@@ -151,22 +151,22 @@
 <a href=#151 id=151 data-nosnippet>151</a>
 <a href=#152 id=152 data-nosnippet>152</a>    <span class="kw">pub fn </span>add_i_ext&lt;F: Field&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, r_i: <span class="kw-2">&amp;</span>[F], i: usize) -&gt; DenseMultilinearExtension&lt;F&gt; {
 <a href=#153 id=153 data-nosnippet>153</a>        <span class="kw">let </span><span class="kw-2">mut </span>add_i = <span class="macro">vec!</span>[];
-<a href=#154 id=154 data-nosnippet>154</a>        <span class="kw">let </span>num_vars_current = f64::from(<span class="self">self</span>.layers[i].len() <span class="kw">as </span>u32).log2() <span class="kw">as </span>usize;
+<a href=#154 id=154 data-nosnippet>154</a>        <span class="kw">let </span>num_vars_current = (<span class="self">self</span>.layers[i].len() <span class="kw">as </span>u32).ilog2() <span class="kw">as </span>usize;
 <a href=#155 id=155 data-nosnippet>155</a>
-<a href=#156 id=156 data-nosnippet>156</a>        <span class="kw">let </span>num_vars_next = f64::from(
-<a href=#157 id=157 data-nosnippet>157</a>            <span class="self">self</span>.layers
-<a href=#158 id=158 data-nosnippet>158</a>                .get(i + <span class="number">1</span>)
-<a href=#159 id=159 data-nosnippet>159</a>                .map(|c| c.len())
-<a href=#160 id=160 data-nosnippet>160</a>                .unwrap_or(<span class="self">self</span>.num_inputs) <span class="kw">as </span>u32,
-<a href=#161 id=161 data-nosnippet>161</a>        )
-<a href=#162 id=162 data-nosnippet>162</a>        .log2() <span class="kw">as </span>usize;
-<a href=#163 id=163 data-nosnippet>163</a>
-<a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">for </span>c <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
-<a href=#165 id=165 data-nosnippet>165</a>            <span class="kw">for </span>b <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
-<a href=#166 id=166 data-nosnippet>166</a>                <span class="kw">for </span>a <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_current <span class="kw">as </span>u32) {
-<a href=#167 id=167 data-nosnippet>167</a>                    add_i.push(<span class="kw">match </span><span class="self">self</span>.add_i(i, a, b, c) {
-<a href=#168 id=168 data-nosnippet>168</a>                        <span class="bool-val">true </span>=&gt; F::one(),
-<a href=#169 id=169 data-nosnippet>169</a>                        <span class="bool-val">false </span>=&gt; F::zero(),
+<a href=#156 id=156 data-nosnippet>156</a>        <span class="kw">let </span>num_vars_next = (<span class="self">self
+<a href=#157 id=157 data-nosnippet>157</a>            </span>.layers
+<a href=#158 id=158 data-nosnippet>158</a>            .get(i + <span class="number">1</span>)
+<a href=#159 id=159 data-nosnippet>159</a>            .map(|c| c.len())
+<a href=#160 id=160 data-nosnippet>160</a>            .unwrap_or(<span class="self">self</span>.num_inputs) <span class="kw">as </span>u32)
+<a href=#161 id=161 data-nosnippet>161</a>            .ilog2() <span class="kw">as </span>usize;
+<a href=#162 id=162 data-nosnippet>162</a>
+<a href=#163 id=163 data-nosnippet>163</a>        <span class="kw">for </span>c <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
+<a href=#164 id=164 data-nosnippet>164</a>            <span class="kw">for </span>b <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
+<a href=#165 id=165 data-nosnippet>165</a>                <span class="kw">for </span>a <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_current <span class="kw">as </span>u32) {
+<a href=#166 id=166 data-nosnippet>166</a>                    add_i.push(<span class="kw">if </span><span class="self">self</span>.add_i(i, a, b, c) {
+<a href=#167 id=167 data-nosnippet>167</a>                        F::one()
+<a href=#168 id=168 data-nosnippet>168</a>                    } <span class="kw">else </span>{
+<a href=#169 id=169 data-nosnippet>169</a>                        F::zero()
 <a href=#170 id=170 data-nosnippet>170</a>                    });
 <a href=#171 id=171 data-nosnippet>171</a>                }
 <a href=#172 id=172 data-nosnippet>172</a>            }
@@ -182,22 +182,22 @@
 <a href=#182 id=182 data-nosnippet>182</a>
 <a href=#183 id=183 data-nosnippet>183</a>    <span class="kw">pub fn </span>mul_i_ext&lt;F: Field&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, r_i: <span class="kw-2">&amp;</span>[F], i: usize) -&gt; DenseMultilinearExtension&lt;F&gt; {
 <a href=#184 id=184 data-nosnippet>184</a>        <span class="kw">let </span><span class="kw-2">mut </span>mul_i = <span class="macro">vec!</span>[];
-<a href=#185 id=185 data-nosnippet>185</a>        <span class="kw">let </span>num_vars_current = f64::from(<span class="self">self</span>.layers[i].len() <span class="kw">as </span>u32).log2() <span class="kw">as </span>usize;
+<a href=#185 id=185 data-nosnippet>185</a>        <span class="kw">let </span>num_vars_current = (<span class="self">self</span>.layers[i].len() <span class="kw">as </span>u32).ilog2() <span class="kw">as </span>usize;
 <a href=#186 id=186 data-nosnippet>186</a>
-<a href=#187 id=187 data-nosnippet>187</a>        <span class="kw">let </span>num_vars_next = f64::from(
-<a href=#188 id=188 data-nosnippet>188</a>            <span class="self">self</span>.layers
-<a href=#189 id=189 data-nosnippet>189</a>                .get(i + <span class="number">1</span>)
-<a href=#190 id=190 data-nosnippet>190</a>                .map(|c| c.len())
-<a href=#191 id=191 data-nosnippet>191</a>                .unwrap_or(<span class="self">self</span>.num_inputs) <span class="kw">as </span>u32,
-<a href=#192 id=192 data-nosnippet>192</a>        )
-<a href=#193 id=193 data-nosnippet>193</a>        .log2() <span class="kw">as </span>usize;
-<a href=#194 id=194 data-nosnippet>194</a>
-<a href=#195 id=195 data-nosnippet>195</a>        <span class="kw">for </span>c <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
-<a href=#196 id=196 data-nosnippet>196</a>            <span class="kw">for </span>b <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
-<a href=#197 id=197 data-nosnippet>197</a>                <span class="kw">for </span>a <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_current <span class="kw">as </span>u32) {
-<a href=#198 id=198 data-nosnippet>198</a>                    mul_i.push(<span class="kw">match </span><span class="self">self</span>.mul_i(i, a, b, c) {
-<a href=#199 id=199 data-nosnippet>199</a>                        <span class="bool-val">true </span>=&gt; F::one(),
-<a href=#200 id=200 data-nosnippet>200</a>                        <span class="bool-val">false </span>=&gt; F::zero(),
+<a href=#187 id=187 data-nosnippet>187</a>        <span class="kw">let </span>num_vars_next = (<span class="self">self
+<a href=#188 id=188 data-nosnippet>188</a>            </span>.layers
+<a href=#189 id=189 data-nosnippet>189</a>            .get(i + <span class="number">1</span>)
+<a href=#190 id=190 data-nosnippet>190</a>            .map(|c| c.len())
+<a href=#191 id=191 data-nosnippet>191</a>            .unwrap_or(<span class="self">self</span>.num_inputs) <span class="kw">as </span>u32)
+<a href=#192 id=192 data-nosnippet>192</a>            .ilog2() <span class="kw">as </span>usize;
+<a href=#193 id=193 data-nosnippet>193</a>
+<a href=#194 id=194 data-nosnippet>194</a>        <span class="kw">for </span>c <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
+<a href=#195 id=195 data-nosnippet>195</a>            <span class="kw">for </span>b <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_next <span class="kw">as </span>u32) {
+<a href=#196 id=196 data-nosnippet>196</a>                <span class="kw">for </span>a <span class="kw">in </span><span class="number">0</span>..<span class="number">2usize</span>.pow(num_vars_current <span class="kw">as </span>u32) {
+<a href=#197 id=197 data-nosnippet>197</a>                    mul_i.push(<span class="kw">if </span><span class="self">self</span>.mul_i(i, a, b, c) {
+<a href=#198 id=198 data-nosnippet>198</a>                        F::one()
+<a href=#199 id=199 data-nosnippet>199</a>                    } <span class="kw">else </span>{
+<a href=#200 id=200 data-nosnippet>200</a>                        F::zero()
 <a href=#201 id=201 data-nosnippet>201</a>                    });
 <a href=#202 id=202 data-nosnippet>202</a>                }
 <a href=#203 id=203 data-nosnippet>203</a>            }
@@ -275,11 +275,12 @@
 <a href=#275 id=275 data-nosnippet>275</a>            <span class="kw">for </span>b <span class="kw">in </span><span class="number">0</span>..<span class="number">4 </span>{
 <a href=#276 id=276 data-nosnippet>276</a>                <span class="kw">for </span>c <span class="kw">in </span><span class="number">0</span>..<span class="number">4 </span>{
 <a href=#277 id=277 data-nosnippet>277</a>                    <span class="kw">let </span>expected = ((a == <span class="number">0 </span>|| a == <span class="number">1</span>) &amp;&amp; a == b &amp;&amp; a == c)
-<a href=#278 id=278 data-nosnippet>278</a>                        || a == <span class="number">2 </span>&amp;&amp; b == <span class="number">1 </span>&amp;&amp; c == <span class="number">2
-<a href=#279 id=279 data-nosnippet>279</a>                        </span>|| a == b &amp;&amp; b == c &amp;&amp; a == <span class="number">3</span>;
+<a href=#278 id=278 data-nosnippet>278</a>                        || (a == <span class="number">2 </span>&amp;&amp; b == <span class="number">1 </span>&amp;&amp; c == <span class="number">2</span>)
+<a href=#279 id=279 data-nosnippet>279</a>                        || (a == b &amp;&amp; b == c &amp;&amp; a == <span class="number">3</span>);
 <a href=#280 id=280 data-nosnippet>280</a>                    <span class="macro">assert_eq!</span>(circuit.mul_i(<span class="number">1</span>, a, b, c), expected, <span class="string">"{a} {b} {c}"</span>);
 <a href=#281 id=281 data-nosnippet>281</a>                }
 <a href=#282 id=282 data-nosnippet>282</a>            }
 <a href=#283 id=283 data-nosnippet>283</a>        }
 <a href=#284 id=284 data-nosnippet>284</a>    }
-<a href=#285 id=285 data-nosnippet>285</a>}</code></pre></div></section></main></body></html>
+<a href=#285 id=285 data-nosnippet>285</a>}
+</code></pre></div></section></main></body></html>
