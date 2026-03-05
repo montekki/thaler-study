@@ -1,6 +1,4 @@
 name: Build and deploy docs
-permissions:
-  contents: read
 on:
   pull_request:
   push:
@@ -10,6 +8,8 @@ on:
 jobs:
   rustdocs:
     name: Build rustdocs
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
