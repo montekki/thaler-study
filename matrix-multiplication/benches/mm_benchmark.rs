@@ -1,9 +1,9 @@
 use std::{hint::black_box, ops::Mul};
 
 use ark_ff::{Field, Fp64, MontBackend, MontConfig, One};
-use ark_std::{rand::Rng, test_rng, UniformRand};
+use ark_std::{UniformRand, rand::Rng, test_rng};
 use bitvec::slice::BitSlice;
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use matrix_multiplication::G;
 use sum_check_protocol::{Prover, SumCheckPolynomial};
 

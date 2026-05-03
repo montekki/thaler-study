@@ -3,7 +3,7 @@
 
 //! Fiat-Shamir Transformation implementation.
 
-use ark_ff::{field_hashers::HashToField, Field};
+use ark_ff::{Field, field_hashers::HashToField};
 use ark_poly::univariate;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
 use sum_check_protocol::{RngF, SumCheckPolynomial};
@@ -172,10 +172,10 @@ impl<F: Field, R: RngF<F>, P: SumCheckPolynomial<F>> InteractiveVerifier<F, R>
 
 #[cfg(test)]
 mod tests {
-    use ark_ff::{field_hashers::DefaultFieldHasher, Field, Fp64, MontBackend, MontConfig};
+    use ark_ff::{Field, Fp64, MontBackend, MontConfig, field_hashers::DefaultFieldHasher};
     use ark_poly::{
-        multivariate::{self, SparseTerm, Term},
         DenseMVPolynomial,
+        multivariate::{self, SparseTerm, Term},
     };
     use ark_std::{rand::Rng, test_rng};
     use sum_check_protocol::{Prover, Verifier};

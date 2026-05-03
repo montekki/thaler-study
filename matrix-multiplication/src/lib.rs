@@ -1,6 +1,6 @@
 use ark_ff::{FftField, Field};
 use ark_poly::{
-    univariate::SparsePolynomial, DenseMultilinearExtension, MultilinearExtension, Polynomial,
+    DenseMultilinearExtension, MultilinearExtension, Polynomial, univariate::SparsePolynomial,
 };
 use sum_check_protocol::SumCheckPolynomial;
 
