@@ -2,8 +2,8 @@ use std::cmp;
 
 use ark_ff::{FftField, Field};
 use ark_poly::{
-    univariate::SparsePolynomial, DenseMultilinearExtension, EvaluationDomain, Evaluations,
-    GeneralEvaluationDomain, MultilinearExtension, Polynomial,
+    DenseMultilinearExtension, EvaluationDomain, Evaluations, GeneralEvaluationDomain,
+    MultilinearExtension, Polynomial, univariate::SparsePolynomial,
 };
 use sum_check_protocol::SumCheckPolynomial;
 
@@ -193,7 +193,7 @@ mod tests {
             #[allow(clippy::needless_range_loop)]
             for i in 0..n {
                 for j in (i + 1)..n {
-                    let are_connected = rng.gen();
+                    let are_connected = rng.r#gen();
 
                     res[i][j] = are_connected;
                     res[j][i] = are_connected;

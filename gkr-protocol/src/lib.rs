@@ -7,7 +7,7 @@ use std::iter;
 
 use ark_ff::{FftField, Field, Zero};
 use ark_poly::{
-    univariate, DenseMultilinearExtension, DenseUVPolynomial, MultilinearExtension, Polynomial,
+    DenseMultilinearExtension, DenseUVPolynomial, MultilinearExtension, Polynomial, univariate,
 };
 use ark_std::rand::Rng;
 

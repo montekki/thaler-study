@@ -5,8 +5,8 @@ use std::cmp;
 
 use ark_ff::{FftField, Field};
 use ark_poly::{
-    univariate, DenseMultilinearExtension, EvaluationDomain, Evaluations, GeneralEvaluationDomain,
-    MultilinearExtension, Polynomial,
+    DenseMultilinearExtension, EvaluationDomain, Evaluations, GeneralEvaluationDomain,
+    MultilinearExtension, Polynomial, univariate,
 };
 use sum_check_protocol::SumCheckPolynomial;
 

@@ -2,9 +2,10 @@ use std::marker::PhantomData;
 
 use ark_ff::{Field, Zero};
 use ark_poly::{
+    Polynomial,
     multivariate::{self, SparseTerm, Term},
     polynomial::DenseMVPolynomial,
-    univariate, Polynomial,
+    univariate,
 };
 use ark_std::rand::Rng;
 use bitvec::slice::BitSlice;
@@ -332,13 +333,13 @@ impl<F: Field, P: SumCheckPolynomial<F>> Verifier<F, P> {
 #[cfg(test)]
 mod tests {
     use ark_ff::{
+        Field, One, PrimeField,
         fields::Fp64,
         fields::{MontBackend, MontConfig},
-        Field, One, PrimeField,
     };
     use ark_poly::{
-        multivariate::{self, SparseTerm, Term},
         DenseMVPolynomial,
+        multivariate::{self, SparseTerm, Term},
     };
     use ark_std::{rand::Rng, test_rng};
     use pretty_assertions::assert_eq;
